@@ -66,6 +66,49 @@
   }
 }
 
+.launchpage_bg {
+  /* background-image: url('path/to/your/image.jpg'); */
+  background-size: cover; /* Adjust as needed */
+  background-position: center; /* Adjust as needed */
+  background-repeat: no-repeat; /* Adjust as needed */
+  background-color: rgba(170, 191, 255, 0.5); /* Adjust the last value (alpha) to adjust transparency */
+}
+
+.launchpage_alt_bg {
+  /* background-image: url('path/to/your/image.jpg'); */
+  background-size: cover; /* Adjust as needed */
+  background-position: center; /* Adjust as needed */
+  background-repeat: no-repeat; /* Adjust as needed */
+  background-color: rgba(226, 226, 226, 0.5); /* Adjust the last value (alpha) to adjust transparency */
+}
+
+.split-layout {
+  display: flex;
+  width: 100%;
+  height: 50vh; /* Adjust the height as needed */
+}
+
+
+.left-half {
+  flex: 1;
+  display: flex;
+  padding-left: 80px;
+  justify-content: center;
+  align-items: center;
+}
+
+.right-half {
+  flex: 1;
+  display: flex;
+  padding-right: 80px;
+  justify-content: center;
+  align-items: center;
+}
+
+.mini-section-center {
+  align: center
+}
+
 @layer base {
   * {
     @apply border-border;
