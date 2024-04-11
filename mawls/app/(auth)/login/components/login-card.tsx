@@ -36,12 +36,16 @@ export default function LoginCard() {
                 type="password"
               />
             </div>
-            <Button
-              className="w-full bg-blue-500 hover:bg-blue-700 hover:text-white"
-              type="submit"
-            >
-              Login
-            </Button>
+            <div className="pt-1">
+              <Link href="/Lounge">
+                <Button
+                className="w-full bg-blue-500 hover:bg-blue-700 hover:text-white"
+                type="submit">
+                Login
+              </Button>
+              </Link>
+            </div>
+
             <div className="pt-1">
               <Link href="/register">
                 <Button className="w-full text-black bg-slate-200 hover:bg-slate-500 hover:text-white">

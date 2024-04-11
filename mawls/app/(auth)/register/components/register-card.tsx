@@ -9,6 +9,7 @@ import {
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import Link from "next/link";
 
 export default function RegisterCard() {
   return (
@@ -34,9 +35,15 @@ export default function RegisterCard() {
               <Label htmlFor="password">Password</Label>
               <Input id="password" placeholder="password" required type="password" />
             </div>
-            <Button className="w-full bg-blue-500 hover:bg-blue-700 hover:text-white" type="submit">
-              Register
-            </Button>
+            <div className="pt-1">
+              <Link href="/Lounge">
+                <Button
+                className="w-full bg-blue-500 hover:bg-blue-700 hover:text-white"
+                type="submit">
+                Register
+              </Button>
+              </Link>
+            </div>
           </div>
         </CardContent>
       </Card>

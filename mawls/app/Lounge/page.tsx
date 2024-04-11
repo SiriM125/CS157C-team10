@@ -50,10 +50,12 @@ const initialLounges = [
     return (
         <main className="px-8 py-4">
           <Navbar />
-          <div className="text-center mb-8">
-            <h1 className="text-4xl tracking-tight text-gray-900 sm:text-6xl py-4">
+          <div className="text-center mb-8 w-full">
+            <div className="bg-[#60a5fa] py-2 px-4 rounded-md ">
+            <h1 className="text-3xl tracking-tight text-white sm:text-3xl py-4">
               Your Lounges
             </h1>
+            </div>
           </div>
           <div className="mb-8 w-1/3">
             <input
@@ -77,9 +79,11 @@ const initialLounges = [
               </ScrollArea>
               <Dialog>
                 <DialogTrigger>
+                <div className="pt-5">
                   <button type="submit" className="w-full bg-blue-500 text-white px-6 py-2 rounded-md hover:bg-blue-600 transition-colors">
                     Add Lounge
                   </button>
+                  </div>
                 </DialogTrigger>
                 <DialogContent>
                   <DialogHeader>
