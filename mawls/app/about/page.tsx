@@ -87,6 +87,7 @@ export default function Home() {
         </p>
 
         <br/><br/>
+        
         <p className = "sm:text-2xl font-bold">
           Challenges
         </p>
@@ -97,7 +98,7 @@ export default function Home() {
           Not all of our members were skilled with frontend, and so we started with a mostly blank slate.
           Furthermore, given the time restraints, presence of other classes, and our small team, 
           we have to allocate our personnel and time with great care. However, as one can see from what 
-          is here right now, 
+          is here right now, we managed, and picked up some things here and there. 
         </p>
         <br/>
         <p>
