@@ -26,10 +26,10 @@ function Navbar() {
           </div>
         </Link>
         <ul className="flex space-x-4 items-end">
-          <Link href="/">
+          <Link href="/features">
             <div className="hover:text-gray-300">Features</div>
           </Link>
-          <Link href="/">
+          <Link href="/about">
             <div className="hover:text-gray-300">About Us</div>
           </Link>
         </ul>
