@@ -1,3 +1,6 @@
+"use client"
+
+import { useState } from 'react';
 import {
   Card,
   CardContent,
@@ -12,6 +15,45 @@ import { Button } from "@/components/ui/button";
 import Link from "next/link";
 
 export default function LoginCard() {
+  
+  const [loginError, setLoginError] = useState<string | null>(null);
+
+
+  // USED TO HANDLE THE LOGGING IN
+  const handleLogin = async () => {
+
+    const usernameInput = document.getElementById('username') as HTMLInputElement;
+    const passwordInput = document.getElementById('password') as HTMLInputElement;
+    
+    const username = usernameInput?.value;
+    const password = passwordInput?.value;
+
+    if (!username || !password) {
+      setLoginError('Please enter both username and password');
+      return;
+    }
+    
+    try {
+      const response = await fetch(`/api/login/${username}/${password}`);
+      
+      if (response.ok) {
+        // Login successful, redirect to the next page
+        window.location.href = '/Lounge';
+      
+      } else {
+        // Login failed, display error message
+        const data = await response.json();
+        setLoginError(data.message);
+      }
+    } catch (error) {
+      console.error('Error:', error);
+      setLoginError('An error occurred while logging in.');
+    }
+  };
+
+
+
+  // Render stuff
   return (
     <div className="flex justify-center items-center">
       <Card className="mx-auto max-w-sm">
@@ -36,14 +78,16 @@ export default function LoginCard() {
                 type="password"
               />
             </div>
+            
+            {loginError && <p className="text-red-500">{loginError}</p>}
+
             <div className="pt-1">
-              <Link href="/Lounge">
-                <Button
+              <Button
                 className="w-full bg-blue-500 hover:bg-blue-700 hover:text-white"
-                type="submit">
+                type="button"
+                onClick={handleLogin}>
                 Login
               </Button>
-              </Link>
             </div>
 
             <div className="pt-1">

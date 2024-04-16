@@ -26,6 +26,10 @@ export default function Home() {
             >
               Get started
             </a>
+
+            {/* <Link href="/api/test_data">
+              <code className="font-mono font-bold">api/index.py</code>
+            </Link> */}
           </div>
         </div>
         <br/><br/> 
@@ -119,9 +123,11 @@ export default function Home() {
         >
           Sign up now
         </a>
-
+        
 
         <br/><br/>
+
+        {/* <DataComponent/> */}
 
       </div>
 

@@ -1,3 +1,6 @@
+"use client"
+
+import { useState } from 'react';
 import {
   Card,
   CardContent,
@@ -12,6 +15,51 @@ import { Button } from "@/components/ui/button";
 import Link from "next/link";
 
 export default function RegisterCard() {
+
+  const [registerError, setRegisterError] = useState<string | null>(null);
+  const [showSuccessPopup, setShowSuccessPopup] = useState(false);
+
+
+  // USED TO HANDLE THE LOGGING IN
+  const handleRegister = async () => {
+
+    const usernameInput = document.getElementById('username') as HTMLInputElement;
+    const emailInput = document.getElementById('email') as HTMLInputElement;
+    const passwordInput = document.getElementById('password') as HTMLInputElement;
+    
+    const username = usernameInput?.value;
+    const email = emailInput?.value;
+    const password = passwordInput?.value;
+
+    if (!username || !email || !password) {
+      setRegisterError('Please enter username, email, and password');
+      return;
+    }
+    
+    try {
+      const response = await fetch(`/api/register/${username}/${email}/${password}`);
+
+      if (response.ok) {
+        // Registeration successful, redirect to the login page
+        setShowSuccessPopup(true);
+        
+        setTimeout(() => {
+          window.location.href = '/login';
+        }, 3000);
+      
+      } else {
+        // Registeration failed, display error message
+        const data = await response.json();
+        setRegisterError(data.message);
+      }
+    } catch (error) {
+      console.error('Error:', error);
+      setRegisterError('An error occurred during registration.');
+    }
+  };
+
+
+  // Render stuff
   return (
     <div className="flex justify-center items-center">
       <Card className="mx-auto max-w-sm">
@@ -35,18 +83,29 @@ export default function RegisterCard() {
               <Label htmlFor="password">Password</Label>
               <Input id="password" placeholder="password" required type="password" />
             </div>
+            
+            {registerError && <p className="text-red-500">{registerError}</p>}
+            
             <div className="pt-1">
-              <Link href="/Lounge">
-                <Button
+              <Button
                 className="w-full bg-blue-500 hover:bg-blue-700 hover:text-white"
-                type="submit">
+                type="button"
+                onClick={handleRegister}>
                 Register
               </Button>
-              </Link>
             </div>
           </div>
         </CardContent>
       </Card>
+
+      {showSuccessPopup && 
+        <div id="myModal" className="modal">
+          <div className="modal-content">
+            <p>Registration successful. Redirecting you to the login page...</p>
+          </div>
+        </div>
+      }
+
     </div>
   );
 }
