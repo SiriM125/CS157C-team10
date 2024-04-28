@@ -2,8 +2,8 @@
 
 "use client";
 import Link from 'next/link';
-import { useState } from 'react';
-import Navbar from "@/components/Navbar";
+import { useState, useEffect } from 'react';
+import NavbarAlt from "@/components/NavbarAlt";
 import {
   Card,
   CardContent,
@@ -28,9 +28,9 @@ const initialLounges = [
     { id: 2, name: "Team 10 Lounge", description: "Chat for Team 10" },
     { id: 3, name: "Lounge 3", description: "Chat for Lounge 3" },
     { id: 4, name: "Lounge 4", description: "Chat for Lounge 4" },
-    { id: 4, name: "Lounge 5", description: "Chat for Lounge 5" },
-    { id: 4, name: "Lounge 6", description: "Chat for Lounge 6" },
-    { id: 4, name: "Lounge 7", description: "Chat for Lounge 7" }
+    { id: 5, name: "Lounge 5", description: "Chat for Lounge 5" },
+    { id: 6, name: "Lounge 6", description: "Chat for Lounge 6" },
+    { id: 7, name: "Lounge 7", description: "Chat for Lounge 7" }
   ];
   
   const Lounge = () => {
@@ -38,7 +38,21 @@ const initialLounges = [
     const [selectedLounge, setSelectedLounge] = useState(null);
     const [messages, setMessages] = useState([]);
     const [searchTerm, setSearchTerm] = useState("");
+    const [username, setUsername] = useState("");
   
+    useEffect(() => {
+      // Fetch the username from the backend
+      fetch('/api/get_username')
+        .then(response => response.json())
+        .then(data => {
+          setUsername(data.username);
+        })
+        .catch(error => {
+          console.error('Error fetching username:', error);
+          window.location.href = '/login' //Send them back to login page if the username cannot be obtained. 
+        });
+    }, []);
+
     const handleSendMessage = (message) => {
       setMessages(prevMessages => [message, ...prevMessages]);
     };
@@ -49,11 +63,11 @@ const initialLounges = [
   
     return (
         <main className="px-8 py-4">
-          <Navbar />
+          <NavbarAlt />
           <div className="text-center mb-8 w-full">
             <div className="bg-[#60a5fa] py-2 px-4 rounded-md ">
             <h1 className="text-3xl tracking-tight text-white sm:text-3xl py-4">
-              Your Lounges
+              Welcome, {username}
             </h1>
             </div>
           </div>

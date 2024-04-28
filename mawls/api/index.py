@@ -1,6 +1,9 @@
-from flask import Flask, jsonify
+from flask import Flask, jsonify, session
 from flask_cqlalchemy import CQLAlchemy
+from flask_session import Session
+
 import uuid
+import os
 
 from flask_cors import CORS
 from cassandra.cluster import Cluster
@@ -9,11 +12,16 @@ from cassandra.cluster import Cluster
 app = Flask(__name__)
 CORS(app)
 
+app.config['SESSION_TYPE'] = 'filesystem'
+app.config['SECRET_KEY'] = os.urandom(24)
+
+Session(app)
+
 app.config['CASSANDRA_HOSTS'] = ['127.0.0.1']
 app.config['CASSANDRA_KEYSPACE'] = 'mawls'
 
 cluster = Cluster(['127.0.0.1'])
-session = cluster.connect('mawls')
+dbSession = cluster.connect('mawls')
 
 db = CQLAlchemy(app)
 
@@ -21,8 +29,9 @@ db = CQLAlchemy(app)
 # Used for logging in
 @app.route("/api/login/<username>/<password>")
 def login(username, password):
+
     query = "SELECT * FROM user WHERE username = %s AND password = %s ALLOW FILTERING"
-    result = session.execute(query, (username, password))
+    result = dbSession.execute(query, (username, password))
     
     data = []
     for row in result:
@@ -37,7 +46,34 @@ def login(username, password):
     if len(data) == 0:
         return jsonify({'message': 'Invalid username or password'}), 401
     else:
+        # Set the session stuff.
+        user_info = data[0]
+        session['user_id'] = str(user_info['user_id']) 
+        session['username'] = username
+        session['logged_in'] = True
         return jsonify({'message': 'Login successful'}), 200
+        
+# Used to log out. 
+@app.route("/api/logout")
+def logout():
+    # Clear session data
+    session.pop('username', None)
+    session.pop('logged_in', None)
+    session.pop('user_id', None)
+    
+    return jsonify({'message': 'Logout successful'}), 200
+
+# Get username of the current user
+@app.route("/api/username")
+def username():
+    # Check if user is logged in
+    if 'logged_in' in session and session['logged_in']:
+        # Retrieve username from session
+        username = session['username']
+        return jsonify({'message': f'Welcome, {username}!'})
+    else:
+        return jsonify({'message': 'You are not logged in'}), 401
+
 
 # Used for registering a NEW user
 @app.route("/api/register/<username>/<email>/<password>") 
@@ -45,7 +81,7 @@ def register(username, email, password):
 
     # First, check if there is an account with the given email already. If so, operation fails. 
     query = "SELECT * FROM user WHERE email = '" + email + "' ALLOW FILTERING"
-    result = session.execute(query)
+    result = dbSession.execute(query)
     
     data = []
     for row in result:
@@ -56,9 +92,26 @@ def register(username, email, password):
             'username': row.username
         })
 
-    # Check if user exists with given credentials. Fail the operation if so.
+    # Check if user exists with given email. Fail the operation if so.
     if len(data) != 0:
         return jsonify({'message': 'This email has already been used'}), 401
+
+    # Check if there is an account with the given username. If so, operation fails
+    query = "SELECT * FROM user WHERE username = '" + username + "' ALLOW FILTERING"
+    result = dbSession.execute(query)
+    
+    data = []
+    for row in result:
+        data.append({
+            'user_id': row.user_id,
+            'email': row.email,
+            'password': row.password,
+            'username': row.username
+        })
+
+    # Check if user exists with given username. Fail the operation if so.
+    if len(data) != 0:
+        return jsonify({'message': 'This username has already been used'}), 401
 
     # Reaching here means the email hasn't been used yet
     try: 
@@ -67,7 +120,7 @@ def register(username, email, password):
         
         # Insert the new user data into the User table
         query = "INSERT INTO user (user_id, email, password, username) VALUES (%s, %s, %s, %s)"
-        session.execute(query, (user_id, email, password, username))
+        dbSession.execute(query, (user_id, email, password, username))
         
         # Return success message
         return jsonify({'message': 'User registration successful'}), 201
@@ -75,8 +128,17 @@ def register(username, email, password):
     except Exception as e:
         # Handle errors
         print('Error:', e)
-        return jsonify({'message': 'Error occurred during user registration'}), 500
+        return jsonify({'message': 'Server error occurred during user registration'}), 500
     
+
+#Get username
+@app.route("/api/get_username")
+def get_username():
+    if ('username' in session): 
+        return jsonify({'username': session['username']})
+    
+    else: # In case someone just directly accesses the page without the username.
+        return None
 
 # Database creation/class stuff below
 
