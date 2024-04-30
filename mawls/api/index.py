@@ -147,10 +147,12 @@ class User(db.Model):
     username = db.columns.Text(required=True)
     password = db.columns.Text(required=True)
     email = db.columns.Text(required=True)
+    lounges = db.columns.List(db.columns.UUID)
 
 class Lounge(db.Model):
     lounge_id = db.columns.UUID(primary_key=True)
     lounge_name = db.columns.Text(required=True)
+    # lounge_members = db.columns.List(db.columns.Text)
     lounge_members = db.columns.List(db.columns.Text)
 
 class Message(db.Model):

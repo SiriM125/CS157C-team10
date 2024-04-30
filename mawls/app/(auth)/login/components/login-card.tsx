@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Card,
   CardContent,
@@ -17,7 +17,21 @@ import Link from "next/link";
 export default function LoginCard() {
   
   const [loginError, setLoginError] = useState<string | null>(null);
-
+  
+  const [username, setUsername] = useState("");
+  
+    useEffect(() => {
+      // Fetch the username from the backend
+      fetch('/api/get_username')
+        .then(response => response.json())
+        .then(data => {
+          setUsername(data.username);
+          window.location.href = '/Lounge' //Send them back to Lounge page if username can be obtained.
+        })
+        .catch(error => {
+          console.error('Error fetching username:', error); 
+        });
+    }, []);
 
   // USED TO HANDLE THE LOGGING IN
   const handleLogin = async () => {
