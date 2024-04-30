@@ -119,9 +119,15 @@ def register(username, email, password):
         user_id = uuid.uuid4()
         
         # Insert the new user data into the User table
-        query = "INSERT INTO user (user_id, email, password, username) VALUES (%s, %s, %s, %s)"
-        dbSession.execute(query, (user_id, email, password, username))
+        # query = "INSERT INTO user (user_id, email, password, username) VALUES (%s, %s, %s, %s)"
+        # dbSession.execute(query, (user_id, email, password, username))
         
+        # Temporary - Adds users, and put them into the default lounge.
+        query = "INSERT INTO user (user_id, email, password, username, lounges) VALUES (%s, %s, %s, %s, %s)"
+        lounge_id = uuid.UUID("87826075-dfb2-420e-a8ef-71f889731ec3") # Insert your UUID for the lounge here.
+        dbSession.execute(query, (user_id, email, password, username, [lounge_id]))
+        dbSession.execute("UPDATE mawls.lounge SET lounge_members = lounge_members + [%s] WHERE lounge_id = %s", (username, lounge_id))
+
         # Return success message
         return jsonify({'message': 'User registration successful'}), 201
     
@@ -140,7 +146,8 @@ def get_username():
     else: # In case someone just directly accesses the page without the username.
         return None
 
-# Database creation/class stuff below
+
+# - - - Database creation/class stuff below - - -
 
 class User(db.Model):
     user_id = db.columns.UUID(primary_key=True, )
