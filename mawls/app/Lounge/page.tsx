@@ -4,8 +4,8 @@ import ChannelContent from "@/app/Lounge/components/ChannelContent";
 
 export default function Dashboard() {
   return (
-    <main>
-      <div className="flex">
+    <main className="overscroll" style={{ overflow: 'hidden' }}>
+      <div className="flex overflow-hidden fixed">
         <SideBar />
         <Channels />
         <ChannelContent />

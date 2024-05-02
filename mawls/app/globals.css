@@ -37,6 +37,10 @@
     -ms-user-select: none;
     -user-select: none;
   }
+  .overscroll{
+    overflow: hidden;
+    
+  }
 }
 
 @layer base {
@@ -223,15 +227,11 @@
 }
 
 
-
-
-
 @layer base {
   * {
     @apply border-border;
   }
   body {
     @apply bg-background text-foreground;
-    overflow: hidden;
   }
 }

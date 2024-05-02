@@ -32,7 +32,7 @@ const handleLogout = async () => {
 
 export default function NavbarContent() {
   return (
-    <div className="flex flex-row items-center justify-evenly bg-zinc-100 w-full h-14 m-0 shadow-md border-b border-zinc-100">
+    <div className="flex flex-row items-center justify-evenly bg-zinc-100 w-full h-14 m-0 shadow-md border-b border-zinc-300">
       <Component1Icon
         height={20}
         width={20}
