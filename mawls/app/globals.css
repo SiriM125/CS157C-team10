@@ -22,12 +22,20 @@
     text-white bg-gray-900 
     text-xs font-bold 
     transition-all duration-100 scale-0 origin-left;
+    z-index: 100;
   }
 
   .lounge-hr {
     @apply bg-gray-200 
     border border-gray-200 rounded-full
     mx-2;
+  }
+
+  .unselectable{
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    -user-select: none;
   }
 }
 

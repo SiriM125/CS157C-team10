@@ -15,7 +15,7 @@ const DMIcon = () => {
         alt="DM"
         className="text-white"
       />
-      <span className="lounge-tooltip group-hover:scale-100">
+      <span className="lounge-tooltip group-hover:scale-100 unselectable">
         Direct Messages
       </span>
     </div>
@@ -37,9 +37,9 @@ function LoungeIcon({ name }: IconProps) {
     .map((word) => word.charAt(0)) // Extract the first character of each word
     .join(""); // Join the extracted characters together
   return (
-    <div className="lounge-icon group">
+    <div className="lounge-icon group unselectable">
       {abbreviatedName}
-      <span className="lounge-tooltip group-hover:scale-100">{name}</span>
+      <span className="lounge-tooltip group-hover:scale-100 unselectable">{name}</span>
     </div>
   );
 }
