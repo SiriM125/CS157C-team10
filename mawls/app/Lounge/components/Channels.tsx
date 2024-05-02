@@ -69,6 +69,10 @@ export default function Channels() {
             channelGroup="text"
             channels={["main", "off-topic"]}
           />
+          <ChannelGroup
+            channelGroup="help"
+            channels={["lecture", "homework"]}
+          />
         </div>
     </div>
   );
