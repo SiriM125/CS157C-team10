@@ -2,6 +2,35 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer components {
+  .lounge-icon {
+    @apply relative flex items-center justify-center 
+    h-12 w-12 mt-2 mb-2 mx-auto  
+  bg-slate-100 hover:bg-blue-600 
+  text-blue-500 hover:text-white
+    hover:rounded-xl rounded-3xl
+    transition-all duration-300 ease-linear
+    cursor-pointer shadow-lg ;
+  }
+
+  .lounge-selected{
+    @apply bg-blue-600 text-white rounded-xl;
+  }
+
+  .lounge-tooltip {
+    @apply absolute w-auto p-2 m-2 min-w-max left-14 rounded-md shadow-md
+    text-white bg-gray-900 
+    text-xs font-bold 
+    transition-all duration-100 scale-0 origin-left;
+  }
+
+  .lounge-hr {
+    @apply bg-gray-200 
+    border border-gray-200 rounded-full
+    mx-2;
+  }
+}
+
 @layer base {
   :root {
     --background: 0 0% 100%;
@@ -187,11 +216,14 @@
 
 
 
+
+
 @layer base {
   * {
     @apply border-border;
   }
   body {
     @apply bg-background text-foreground;
+    overflow: hidden;
   }
 }
