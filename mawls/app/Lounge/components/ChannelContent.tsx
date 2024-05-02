@@ -49,9 +49,9 @@ function Message({ content, timestamp, user }: Message) {
 
 export default function ChannelContent() {
   return (
-    <div className="flex-col flex-grow bg-zinc-100 m-0 ml-76 h-full overflow-hidden">
+    <div className="fixed pl-[304px] m-0 h-screen w-full overflow-hidden">
       <NavbarContent />
-      <div className="flex-grow items-center h-screen w-full mt-0 ml-0 mx-auto px-3 pb-[130px]">
+      <div className="flex-grow items-center h-full w-full mt-0 ml-0 mx-auto px-3 pb-[130px] bg-zinc-100">
         <div className="flex flex-row h-full">
           <ScrollArea className="flex-grow w-full">
             <Message

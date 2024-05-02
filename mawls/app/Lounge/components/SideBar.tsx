@@ -60,7 +60,7 @@ const Divider = () => <hr className="lounge-hr" />;
 
 export default function Lounge() {
   return (
-    <div className="fixed top-0 left-0 h-full w-16 flex flex-col bg-zinc-300">
+    <div className="fixed top-0 left-0 h-screen w-16 flex flex-col bg-zinc-300 overflow-hidden">
       <DMIcon />
       <Divider />
       <LoungeIcon name="My Lounge" />

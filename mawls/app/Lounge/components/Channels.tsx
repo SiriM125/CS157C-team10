@@ -58,8 +58,8 @@ const ChannelGroup = ({ channelGroup, channels }: ChannelGroupProps) => {
 
 export default function Channels() {
   return (
-    <div className="w-60 h-screen m-0 ml-16 bg-zinc-200 overflow-hidden">
-      <div className="flex items-center justify-center h-14 m-0 p-0 shadow-md bg-zinc-200 border-b border-zinc-300">
+    <div className="fixed w-60 h-screen left-0 m-0 ml-16 bg-zinc-200 overflow-hidden">
+      <div className="flex items-center justify-center h-14 m-0 p-0 bg-zinc-200 border-b border-zinc-300">
         <div className="text-lg tracking-wider font-bold text-blue-500 mr-auto ml-4 my-auto align-middle unselectable">
           My Lounge
         </div>
