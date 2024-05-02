@@ -1,3 +1,4 @@
+'use client'
 import {
   PersonIcon,
   ExitIcon,
@@ -13,6 +14,21 @@ import {
   DropdownMenuTrigger,
   DropdownMenuShortcut,
 } from "@/components/ui/dropdown-menu";
+import Link from "next/link";
+
+const handleLogout = async () => {
+  try {
+    const response = await fetch(`/api/logout`);
+    if (response.ok) {
+      // Redirect to login page after successful logout
+      window.location.href = "/login";
+    } else {
+      console.error("Logout failed:", response.status);
+    }
+  } catch (error) {
+    console.error("Logout failed:", error);
+  }
+};
 
 export default function NavbarContent() {
   return (
@@ -51,12 +67,16 @@ export default function NavbarContent() {
             </DropdownMenuShortcut>
           </DropdownMenuItem>
           <DropdownMenuSeparator />
-          <DropdownMenuItem className="text-red-500 focus:bg-red-500 focus:text-white">
-            Logout
-            <DropdownMenuShortcut>
-              <ExitIcon />
-            </DropdownMenuShortcut>
-          </DropdownMenuItem>
+          <Link href="/login" onClick={handleLogout}>
+            <DropdownMenuItem
+              className="text-red-500 focus:bg-red-500 focus:text-white"
+            >
+              Logout
+              <DropdownMenuShortcut>
+                <ExitIcon />
+              </DropdownMenuShortcut>
+            </DropdownMenuItem>
+          </Link>
         </DropdownMenuContent>
       </DropdownMenu>
     </div>

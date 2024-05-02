@@ -2,7 +2,7 @@ import SideBar from "@/app/Lounge/components/SideBar";
 import Channels from "@/app/Lounge/components/Channels";
 import ChannelContent from "@/app/Lounge/components/ChannelContent";
 
-export default function Login() {
+export default function Dashboard() {
   return (
     <main>
       <div className="flex">

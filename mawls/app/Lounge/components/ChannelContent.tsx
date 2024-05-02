@@ -107,7 +107,9 @@ export default function ChannelContent() {
           </ScrollArea>
         </div>
       </div>
-      <MessageBar />
+      <div className="px-3">
+        <MessageBar />
+      </div>
     </div>
   );
 }
