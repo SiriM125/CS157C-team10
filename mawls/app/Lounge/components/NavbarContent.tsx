@@ -1,4 +1,9 @@
-import { PersonIcon, FrameIcon, Component1Icon } from "@radix-ui/react-icons";
+import {
+  PersonIcon,
+  ExitIcon,
+  Component1Icon,
+  GearIcon,
+} from "@radix-ui/react-icons";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -6,11 +11,12 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
+  DropdownMenuShortcut,
 } from "@/components/ui/dropdown-menu";
 
 export default function NavbarContent() {
   return (
-    <div className="flex flex-row items-center justify-evenly bg-zinc-100 bg-opacity-90 w-full h-14 m-0 shadow-md border-b border-zinc-100">
+    <div className="flex flex-row items-center justify-evenly bg-zinc-100 w-full h-14 m-0 shadow-md border-b border-zinc-100">
       <Component1Icon
         height={20}
         width={20}
@@ -28,12 +34,29 @@ export default function NavbarContent() {
           />
         </DropdownMenuTrigger>
         <DropdownMenuContent>
-          <DropdownMenuLabel className="text-blue-500">My Account</DropdownMenuLabel>
-          <DropdownMenuSeparator/>
-          <DropdownMenuItem>Profile</DropdownMenuItem>
-          <DropdownMenuItem>Settings</DropdownMenuItem>
-          <DropdownMenuSeparator/>
-          <DropdownMenuItem>Logout</DropdownMenuItem>
+          <DropdownMenuLabel className="text-blue-500">
+            My Account
+          </DropdownMenuLabel>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem>
+            Profile
+            <DropdownMenuShortcut>
+              <PersonIcon />
+            </DropdownMenuShortcut>
+          </DropdownMenuItem>
+          <DropdownMenuItem>
+            Settings
+            <DropdownMenuShortcut>
+              <GearIcon />
+            </DropdownMenuShortcut>
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem className="text-red-500 focus:bg-red-500 focus:text-white">
+            Logout
+            <DropdownMenuShortcut>
+              <ExitIcon />
+            </DropdownMenuShortcut>
+          </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
     </div>
