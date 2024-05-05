@@ -140,12 +140,67 @@ def register(username, email, password):
 #Get username
 @app.route("/api/get_username")
 def get_username():
-    if ('username' in session): 
+    if 'username' in session: 
         return jsonify({'username': session['username']})
+    else: 
+        return jsonify({'message': 'Username not found'}), 404
     
-    else: # In case someone just directly accesses the page without the username.
-        return None
+# Create new lounge
+@app.route("/api/create_lounge/<lounge_name>/<user_id>")
+def create_lounge(lounge_name, user_id):
+    try:
+        lounge_id = uuid.uuid4()
+        query = "INSERT INTO lounge (lounge_id, lounge_name, creator_id) VALUES (%s, %s, %s)"
+        dbSession.execute(query, (lounge_id, lounge_name, uuid.UUID(user_id)))
+        add_lounge_query = "UPDATE users SET lounges = lounges + [%s] WHERE user_id = %s"
+        dbSession.execute(add_lounge_query, (lounge_id, uuid.UUID(user_id)))  
+        return jsonify({'message': 'Lounge was created successfully', 'lounge_id': str(lounge_id)}), 201
+    except Exception as e:
+        print('Error:', e)
+        return jsonify({'message': 'Server error occurred during lounge creation'}), 500
+    
+# Delete an existing lounge (only creator can delete)
+@app.route("/api/delete_lounge/<lounge_id>/<user_id>")
+def delete_lounge(lounge_id, user_id):
+    try:
+        query = "SELECT * FROM lounge WHERE lounge_id = %s AND creator_id = %s"
+        result = dbSession.execute(query, (uuid.UUID(lounge_id), uuid.UUID(user_id))).one()
+        if not result:
+            return jsonify({'message': 'You do not have permission to delete this lounge'}), 401
+        
+        query = "DELETE FROM lounge WHERE lounge_id = %s"
+        dbSession.execute(query, (uuid.UUID(lounge_id),))
+        
+        return jsonify({'message': 'Lounge deleted successfully'}), 200
+    except Exception as e:
+        print('Error:', e)
+        return jsonify({'message': 'Server error occurred during lounge deletion'}), 500
 
+#For user to enter an existing lounge given lounge ID    
+@app.route("/api/enter_lounge/<user_id>/<lounge_id>")
+def enter_lounge(user_id, lounge_id):
+    try:
+        query = "SELECT * FROM Lounge WHERE lounge_id = %s"
+        lounge_result = dbSession.execute(query, (uuid.UUID(lounge_id),)).one()
+        if not lounge_result:
+            return jsonify({'message': 'Lounge does not exist'}), 404
+        query = "UPDATE User SET lounges = lounges + [%s] WHERE user_id = %s"
+        dbSession.execute(query, (uuid.UUID(lounge_id), uuid.UUID(user_id)))
+        return jsonify({'message': 'Entered lounge successfully'}), 200
+    except Exception as e:
+        print('Error:', e)
+        return jsonify({'message': 'Server error occurred during entry to lounge'}), 500
+    
+# For user to exit lounge
+@app.route("/api/exit_lounge/<user_id>/<lounge_id>")
+def exit_lounge(user_id, lounge_id):
+    try:
+        query = "UPDATE User SET lounges = lounges - [%s] WHERE user_id = %s"
+        dbSession.execute(query, (uuid.UUID(lounge_id), uuid.UUID(user_id)))
+        return jsonify({'message': 'You have exited the lounge successfully'}), 200
+    except Exception as e:
+        print('Error:', e)
+        return jsonify({'message': 'Server error occurred during exit from lounge'}), 500
 
 # - - - Database creation/class stuff below - - -
 
@@ -159,8 +214,9 @@ class User(db.Model):
 class Lounge(db.Model):
     lounge_id = db.columns.UUID(primary_key=True)
     lounge_name = db.columns.Text(required=True)
+    creator_id = db.columns.UUID(required=True) #ID of user that created the database
     # lounge_members = db.columns.List(db.columns.Text)
-    lounge_members = db.columns.List(db.columns.Text)
+    # lounge_members = db.columns.List(db.columns.Text)
 
 class Message(db.Model):
     message_id = db.columns.UUID(primary_key=True)
