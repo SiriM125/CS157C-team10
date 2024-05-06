@@ -15,6 +15,7 @@ import {
   DropdownMenuShortcut,
 } from "@/components/ui/dropdown-menu";
 import Link from "next/link";
+import React, { useState, useEffect } from "react";
 
 const handleLogout = async () => {
   try {
@@ -30,7 +31,27 @@ const handleLogout = async () => {
   }
 };
 
+
 export default function NavbarContent() {
+  //Fetch username
+  const [username, setUsername] = useState("");
+  useEffect(() => {
+    fetch('/api/get_username')
+      .then(response => {
+        if (response.ok) {
+          return response.json();
+        } else {
+          throw new Error('Failed to get username');
+        }
+      })
+      .then(data => {
+        setUsername(data.username);
+      })
+      .catch(error => {
+        console.error('Error fetching username:', error);
+      });
+  }, []);
+
   return (
     <div className="flex flex-row items-center justify-evenly bg-zinc-100 w-full h-14 m-0 shadow-md border-b border-zinc-300">
       <Component1Icon
@@ -51,7 +72,7 @@ export default function NavbarContent() {
         </DropdownMenuTrigger>
         <DropdownMenuContent>
           <DropdownMenuLabel className="text-blue-500">
-            My Account
+            {username}'s Account
           </DropdownMenuLabel>
           <DropdownMenuSeparator />
           <DropdownMenuItem>
