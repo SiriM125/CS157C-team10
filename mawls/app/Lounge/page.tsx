@@ -43,10 +43,10 @@ export default function Dashboard() {
 
   return (
     <main className="overscroll" style={{ overflow: 'hidden' }}>
-      <div className="flex overflow-hidden fixed">
+      <div className="flex">
         <ChannelContent />
-        <SideBar />
         <Channels />
+        <SideBar />
       </div>
     </main>
   );

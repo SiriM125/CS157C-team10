@@ -27,7 +27,7 @@ function Message({ content, timestamp, user }: Message) {
     .map((word) => word.charAt(0)) // Extract the first character of each word
     .join(""); // Join the extracted characters together
   return (
-    <div className="w-full flex flex-row items-center py-4 px-8 m-0">
+    <div className="w-full flex flex-row items-center py-4 px-8 m-0 hover:bg-zinc-200">
       <div className="relative flex items-center justify-center rounded-3xl bg-blue-500 text-white h-12 w-12 unselectable">
         {abbreviatedUser}
       </div>
