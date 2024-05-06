@@ -23,13 +23,20 @@ export default function LoginCard() {
     useEffect(() => {
       // Fetch the username from the backend
       fetch('/api/get_username')
-        .then(response => response.json())
+        .then(response => {
+          if (response.ok) {
+            return response.json();
+          } else {
+            throw new Error('Failed to get username'); // Just let them stay in thise case.
+          }
+        })
         .then(data => {
           setUsername(data.username);
-          window.location.href = '/Lounge' //Send them back to Lounge page if username can be obtained.
+          window.location.href = '/Lounge'; // Send them back to Lounge page if username can be obtained.
         })
         .catch(error => {
-          console.error('Error fetching username:', error); 
+          console.error('Error fetching username:', error);
+          // Handle the error here, maybe display a message or keep the user in the current page.
         });
     }, []);
 

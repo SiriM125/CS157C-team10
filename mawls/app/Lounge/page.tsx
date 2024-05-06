@@ -1,8 +1,46 @@
+"use client"
+
 import SideBar from "@/app/Lounge/components/SideBar";
 import Channels from "@/app/Lounge/components/Channels";
 import ChannelContent from "@/app/Lounge/components/ChannelContent";
+import { useState, useEffect } from 'react';
 
 export default function Dashboard() {
+  const [username, setUsername] = useState("");
+
+  useEffect(() => {
+    // Fetch the username from the backend
+    fetch('/api/get_username')
+      .then(response => {
+        if (response.ok) {
+          return response.json();
+        } else {
+          throw new Error('Failed to get username');
+        }
+      })
+      .then(data => {
+        setUsername(data.username);
+      })
+      .catch(error => {
+        console.error('Error fetching username:', error);
+        window.location.href = '/login' //Send them back to login page if the username cannot be obtained.
+      });
+  }, []);
+
+  // useEffect(() => {
+  //   // Fetch the username from the backend
+  //   fetch('/api/get_username')
+  //     .then(response => response.json())
+  //     .then(data => {
+  //       setUsername(data.username);
+  //     })
+  //     .catch(error => {
+  //       console.error('Error fetching username:', error);
+  //       window.location.href = '/login' //Send them back to login page if the username cannot be obtained. 
+  //     });
+  // }, []);
+
+
   return (
     <main className="overscroll" style={{ overflow: 'hidden' }}>
       <div className="flex overflow-hidden fixed">

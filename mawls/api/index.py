@@ -124,10 +124,9 @@ def register(username, email, password):
         
         # Temporary - Adds users, and put them into the default lounge.
         query = "INSERT INTO user (user_id, email, password, username, lounges) VALUES (%s, %s, %s, %s, %s)"
-        lounge_id = uuid.UUID("87826075-dfb2-420e-a8ef-71f889731ec3") # Insert your UUID for the lounge here.
+        lounge_id = uuid.UUID("5467d1f9-8575-428d-9496-7494191f7dde") # Insert your UUID for the lounge here. //87826075-dfb2-420e-a8ef-71f889731ec3
         dbSession.execute(query, (user_id, email, password, username, [lounge_id]))
-        dbSession.execute("UPDATE mawls.lounge SET lounge_members = lounge_members + [%s] WHERE lounge_id = %s", (username, lounge_id))
-
+        
         # Return success message
         return jsonify({'message': 'User registration successful'}), 201
     
