@@ -22,6 +22,10 @@ interface ChevronProps {
   expanded: boolean;
 }
 
+interface UserProps{
+  user: string;
+}
+
 const ChannelTab = ({ channel }: ChannelTabProps) => {
   return (
     <div className="flex flex-row items-center justify-evenly mt-1 mr-auto ml-2 transition duration-300 ease-in-out">
@@ -41,20 +45,44 @@ const ChannelGroup = ({ channelGroup, channels }: ChannelGroupProps) => {
         onClick={() => setExpanded(!expanded)}
         className="flex flex-row items-center justify-evenly mx-0 text-zinc-500 cursor-pointer"
       >
-        <ChevronIcon expanded={expanded}/>
+        <ChevronIcon expanded={expanded} />
         <h5
           className={
-            expanded ? "text-blue-500 text-opacity-90 text-lg font-bold unselectable" : "text-zinc-500 text-opacity-90 text-lg font-semibold unselectable cursor-default"
+            expanded
+              ? "text-blue-500 text-opacity-90 text-lg font-bold unselectable"
+              : "text-zinc-500 text-opacity-90 text-lg font-semibold unselectable cursor-default"
           }
         >
           {channelGroup}
         </h5>
-        <PlusIcon scale={12} className="text-zinc-500 my-auto ml-auto"/>
-        </div>
-        {expanded && channels && channels.map((channel) => <ChannelTab channel={channel} />)}
+        <PlusIcon scale={12} className="text-zinc-500 my-auto ml-auto" />
+      </div>
+      {expanded &&
+        channels &&
+        channels.map((channel) => <ChannelTab channel={channel} />)}
     </div>
   );
 };
+
+function UserInfo ({user}: UserProps) {
+  const abbreviatedUser = user
+    .split(" ") // Split the name into words
+    .map((word) => word.charAt(0)) // Extract the first character of each word
+    .join("").toUpperCase(); // Join the extracted characters together
+  return (
+    <div className="flex">
+      <div className="flex rounded-lg hover:bg-zinc-100 p-1">
+      <div className="relative flex items-center justify-center rounded-3xl bg-blue-500 text-white h-8 w-8 unselectable">
+        {abbreviatedUser}
+      </div>
+
+      <div className="text-md ml-1 tracking-wider text-zinc-500 my-auto align-middle unselectable">
+        {user}
+      </div>
+      </div>
+    </div>
+  );
+}
 
 export default function Channels() {
   return (
@@ -64,25 +92,22 @@ export default function Channels() {
           My Lounge
         </div>
       </div>
-        <div className="flex flex-col items-center justify-start p-1 m-0">
-          <ChannelGroup
-            channelGroup="text"
-            channels={["main", "off-topic"]}
-          />
-          <ChannelGroup
-            channelGroup="help"
-            channels={["lecture", "homework"]}
-          />
-        </div>
+      <div className="flex flex-col items-center justify-start p-1 m-0">
+        <ChannelGroup channelGroup="text" channels={["main", "off-topic"]} />
+        <ChannelGroup channelGroup="help" channels={["lecture", "homework"]} />
+      </div>
+      <div className="fixed bottom-0 w-60 h-12 m-0 p-0 pt-1 px-1 bg-zinc-300 border-t border-zinc-400">
+        <UserInfo user="brian"/>
+      </div>
     </div>
   );
 }
 
-const ChevronIcon = ({expanded}:ChevronProps) => {
-  const chevClass = 'text-zinc-500 my-auto mr-1'
+const ChevronIcon = ({ expanded }: ChevronProps) => {
+  const chevClass = "text-zinc-500 my-auto mr-1";
   return expanded ? (
-    <ChevronDownIcon scale={14} className={chevClass}/>
+    <ChevronDownIcon scale={14} className={chevClass} />
   ) : (
-    <ChevronRightIcon scale={14} className={chevClass}/>
+    <ChevronRightIcon scale={14} className={chevClass} />
   );
-}
+};
