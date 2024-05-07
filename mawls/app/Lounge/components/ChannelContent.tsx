@@ -17,10 +17,11 @@ interface Lounge {
 
 interface Props {
   selectedLounge: Lounge | null;
+  selectedChannel: string | null;
 }
 
 
-export default function ChannelContent({selectedLounge}: Props) {
+export default function ChannelContent({selectedLounge, selectedChannel}: Props) {
 
   function Message({ content, timestamp, user }: Message) {
     const abbreviatedUser = user
@@ -73,7 +74,7 @@ export default function ChannelContent({selectedLounge}: Props) {
   
   return (
     <div className="fixed pl-[304px] m-0 h-screen w-full overflow-hidden">
-      <NavbarContent selectedLounge={selectedLounge}/>
+      <NavbarContent selectedLounge={selectedLounge} selectedChannel={selectedChannel}/>
       <div className="flex-grow items-center h-full w-full mt-0 ml-0 mx-auto px-3 pb-[130px] bg-zinc-100">
         <div className="flex flex-row h-full">
         <ScrollArea className="flex-grow w-full">

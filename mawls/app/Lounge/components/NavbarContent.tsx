@@ -24,9 +24,10 @@ interface Lounge {
 
 interface Props {
   selectedLounge: Lounge | null;
+  selectedChannel: string | null;
 }
 
-export default function NavbarContent({selectedLounge}: Props) {
+export default function NavbarContent({selectedLounge, selectedChannel}: Props) {
   //Fetch username
   const [username, setUsername] = useState("");
 
@@ -69,7 +70,7 @@ export default function NavbarContent({selectedLounge}: Props) {
         className="tracking-wider font-semibold text-zinc-500 ml-2 my-auto"
       />
       <div className="text-xl text-zinc-500 tracking-wider font-semibold text-opacity-80 mr-auto ml-2 my-auto unselectable">
-      {selectedLounge ? "main" : "select channel"}
+      {selectedLounge && selectedChannel ? selectedChannel : "select channel"}
       </div>
       <DropdownMenu>
         <DropdownMenuTrigger>

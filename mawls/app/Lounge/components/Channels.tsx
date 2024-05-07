@@ -12,10 +12,14 @@ import React, { useEffect, useState } from "react";
 interface ChannelGroupProps {
   channelGroup: string;
   channels: string[];
+  selectChannel: (channel : string | null) => Promise<void> | void;
+  selectedChannel: string | null;
 }
 
 interface ChannelTabProps {
   channel: string;
+  selectChannel: (channel : string | null) => Promise<void> | void;
+  selectedChannel: string | null;
 }
 
 interface ChevronProps {
@@ -33,45 +37,11 @@ interface Lounge {
 
 interface Props {
   selectedLounge: Lounge | null;
+  selectChannel: (channel : string | null) => Promise<void> | void;
+  selectedChannel: string | null;
 }
 
-const ChannelTab = ({ channel }: ChannelTabProps) => {
-  return (
-    <div className="flex flex-row items-center justify-evenly mt-1 mr-auto ml-2 transition duration-300 ease-in-out">
-      <Component1Icon scale={24} className="text-zinc-400" />
-      <div className="text-zinc-500 font-semibold tracking-wider mr-auto transition duration-300 ease-in-out cursor-pointer hover:text-blue-400 unselectable">
-        {channel}
-      </div>
-    </div>
-  );
-};
 
-const ChannelGroup = ({ channelGroup, channels }: ChannelGroupProps) => {
-  const [expanded, setExpanded] = useState(true);
-  return (
-    <div className="m-0 w-full px-2 pb-2 transition duration-300 ease-in-out">
-      <div
-        onClick={() => setExpanded(!expanded)}
-        className="flex flex-row items-center justify-evenly mx-0 text-zinc-500 cursor-pointer"
-      >
-        <ChevronIcon expanded={expanded} />
-        <h5
-          className={
-            expanded
-              ? "text-blue-500 text-opacity-90 text-lg font-bold unselectable"
-              : "text-zinc-500 text-opacity-90 text-lg font-semibold unselectable cursor-default"
-          }
-        >
-          {channelGroup}
-        </h5>
-        <PlusIcon scale={12} className="text-zinc-500 my-auto ml-auto" />
-      </div>
-      {expanded &&
-        channels &&
-        channels.map((channel) => <ChannelTab key={channel} channel={channel} />)}
-    </div>
-  );
-};
 
 function UserInfo ({user}: UserProps) {
   const abbreviatedUser = user
@@ -93,9 +63,8 @@ function UserInfo ({user}: UserProps) {
   );
 }
 
-export default function Channels({selectedLounge}: Props) {
+export default function Channels({selectedLounge, selectChannel, selectedChannel}: Props) {
   const [username, setUsername] = useState("");
-  const [selectedChannel, setSelectedChannel] = useState<string | null>(null);
 
 
   useEffect(() => {
@@ -105,7 +74,7 @@ export default function Channels({selectedLounge}: Props) {
       .then((data) => setUsername(data.username))
       .catch((error) => console.error("Error fetching username:", error));
     if (!selectedLounge){
-      setSelectedChannel(null)
+      selectChannel(null)
     }
   }, []);
 
@@ -118,8 +87,8 @@ export default function Channels({selectedLounge}: Props) {
       </div>
       {selectedLounge && (
         <div className="flex flex-col items-center justify-start p-1 m-0">
-        <ChannelGroup channelGroup="text" channels={["main", "off-topic"]} />
-        <ChannelGroup channelGroup="help" channels={["lecture", "homework"]} />
+        <ChannelGroup channelGroup="text" channels={["main", "off-topic"]} selectChannel={selectChannel} selectedChannel={selectedChannel}/>
+        <ChannelGroup channelGroup="help" channels={["lecture", "homework"]} selectChannel={selectChannel} selectedChannel={selectedChannel}/>
       </div>
       )}
       
@@ -129,6 +98,52 @@ export default function Channels({selectedLounge}: Props) {
     </div>
   );
 }
+
+const ChannelTab = ({ channel, selectChannel, selectedChannel }: ChannelTabProps) => {
+  const toggleSelection = () => {
+    if (!selectedChannel || selectedChannel !== channel) {
+      selectChannel(channel)
+    } else {
+      selectChannel(null)
+    }
+  };
+
+  return (
+    <div onClick={toggleSelection} className="flex flex-row items-center justify-evenly mt-1 mr-auto ml-2 transition duration-300 ease-in-out">
+      <Component1Icon scale={24} className="text-zinc-400" />
+      <div className="text-zinc-500 font-semibold tracking-wider mr-auto transition duration-300 ease-in-out cursor-pointer hover:text-blue-400 unselectable">
+        {channel}
+      </div>
+    </div>
+  );
+};
+
+const ChannelGroup = ({ channelGroup, channels, selectChannel, selectedChannel }: ChannelGroupProps) => {
+  const [expanded, setExpanded] = useState(true);
+  return (
+    <div className="m-0 w-full px-2 pb-2 transition duration-300 ease-in-out">
+      <div
+        onClick={() => setExpanded(!expanded)}
+        className="flex flex-row items-center justify-evenly mx-0 text-zinc-500 cursor-pointer"
+      >
+        <ChevronIcon expanded={expanded} />
+        <h5
+          className={
+            expanded
+              ? "text-blue-500 text-opacity-90 text-lg font-bold unselectable"
+              : "text-zinc-500 text-opacity-90 text-lg font-semibold unselectable cursor-default"
+          }
+        >
+          {channelGroup}
+        </h5>
+        <PlusIcon scale={12} className="text-zinc-500 my-auto ml-auto" />
+      </div>
+      {expanded &&
+        channels &&
+        channels.map((channel) => <ChannelTab key={channel} channel={channel} selectChannel={selectChannel} selectedChannel={selectedChannel} />)}
+    </div>
+  );
+};
 
 const ChevronIcon = ({ expanded }: ChevronProps) => {
   const chevClass = "text-zinc-500 my-auto mr-1";
