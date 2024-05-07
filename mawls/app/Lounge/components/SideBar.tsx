@@ -14,6 +14,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
+  DialogClose,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -23,19 +24,13 @@ import { useToast } from "@/components/ui/use-toast";
 import React, { useState, useEffect, ChangeEvent } from "react";
 
 
-interface Props {
-  selectLounge: (name: string | null) => Promise<void> | void;
-}
-
 interface Lounge {
-  name: string | null;
+  lounge_name: string;
+  lounge_id: string;
 }
 
-interface IconProps {
-  name: string;
-  selectedLounge: Lounge | null;
-  setSelectedLounge: React.Dispatch<React.SetStateAction<Lounge | null>>;
-  selectLounge: (name: string | null) => Promise<void> | void;
+interface Props {
+  selectLounge: (lounge: Lounge | null) => Promise<void> | void;
 }
 
 const DMIcon = () => {
@@ -64,30 +59,41 @@ const AddIcon = () => {
   );
 };
 
-function LoungeIcon({ name , selectedLounge, setSelectedLounge, selectLounge}: IconProps) {
-  const abbreviatedName = name
-    .split(" ") // Split the name into words
-    .map((word) => word.charAt(0)) // Extract the first character of each word
-    .join(""); // Join the extracted characters together
+function LoungeIcon({
+  lounge,
+  selectedLounge,
+  setSelectedLounge,
+  selectLounge,
+}: {
+  lounge: Lounge;
+  selectedLounge: Lounge | null;
+  setSelectedLounge: React.Dispatch<React.SetStateAction<Lounge | null>>;
+  selectLounge: (lounge : Lounge | null) => Promise<void> | void;
+}) {
 
+    const abbreviatedName = lounge.lounge_name?.split(" ")
+      .map((word: string) => word.charAt(0))
+      .join("").toUpperCase()
 
   const toggleSelection = () => {
-    if (!selectedLounge || selectedLounge.name !== name){
-      selectLounge(name);
-      setSelectedLounge({name});
+    if (!selectedLounge || selectedLounge.lounge_id !== lounge.lounge_id) {
+      selectLounge(lounge);
+      setSelectedLounge(lounge);
     } else {
       selectLounge(null);
       setSelectedLounge(null);
     }
-  } 
+  };
 
   return (
-    <div onClick={toggleSelection} className={`group unselectable
-      ${selectedLounge?.name === name ? "lounge-selected" : "lounge-icon"}`
-    }>
+    <div
+      onClick={toggleSelection}
+      className={`group unselectable
+      ${selectedLounge?.lounge_id === lounge.lounge_id ? "lounge-selected" : "lounge-icon"}`}
+    >
       {abbreviatedName}
       <span className="lounge-tooltip group-hover:scale-100 unselectable">
-        {name}
+        {lounge.lounge_name}
       </span>
     </div>
   );
@@ -95,7 +101,7 @@ function LoungeIcon({ name , selectedLounge, setSelectedLounge, selectLounge}: I
 
 const Divider = () => <hr className="lounge-hr" />;
 
-export default function Lounge({selectLounge}: Props) {
+export default function Lounge({ selectLounge }: Props) {
   const [createLounge, setCreateLounge] = useState(false);
   const [joinLounge, setJoinLounge] = useState(false);
 
@@ -107,135 +113,213 @@ export default function Lounge({selectLounge}: Props) {
   const [currentLounge, setCurrentLounge] = useState<Lounge | null>(null);
   const { toast } = useToast();
 
-  const fetchLounges = () => {
-    fetch(`/api/user_lounges/${userid}`)
-      .then(response => {
+  const fetchLounges = (user: string) => {
+    console.log("fetch: " + user)
+    fetch(`/api/user_lounges/${user}`)
+      .then((response) => {
         if (response.ok) {
           return response.json();
         } else {
-          throw new Error('Failed to get lounges');
+          throw new Error("Failed to get lounges");
         }
       })
-      .then(data => {
+      .then((data) => {
         setLounges(data.lounges);
+        console.log(data.lounges);
       })
-      .catch(error => {
-        console.error('Error fetching lounges:', error);
-    });
-  }
+      .catch((error) => {
+        console.error("Error fetching lounges:", error);
+      });
+  };
 
   const fetchUserId = () => {
-    fetch('/api/user_id')
-    .then(response => {
-      if (response.ok) {
-        return response.json();
-      } else {
-        throw new Error('Failed to get userid');
-      }
-    })
-    .then(data => {
-      setUserid(data.user_id);
-    })
-    .catch(error => {
-      console.error('Error fetching userid:', error);
-    });
-  }
+    fetch("/api/user_id")
+      .then((response) => {
+        if (response.ok) {
+          return response.json();
+        } else {
+          throw new Error("Failed to get userid");
+        }
+      })
+      .then((data) => {
+        setUserid(data.user_id);
+        fetchLounges(data.user_id);
+      })
+      .catch((error) => {
+        console.error("Error fetching userid:", error);
+      });
+  };
 
   useEffect(() => {
     fetchUserId();
-    fetchLounges();
-  }, [])
+  }, []);
 
-  const submitCreate = async () => {
-    try{
-      const res = await fetch(`/api/create_lounge/${loungeName}/${userid}`)
-      if (res.ok){
+  const submitJoin = async () => {
+    try {
+      if (loungeId == null || loungeId == ""){
+        throw new Error("Invalid input.")
+      }
+      const res = await fetch(`/api/enter_lounge/${userid}/${loungeId}`);
+      setLoungeId("")
+      if (res.ok) {
         toast({
           title: "Success!",
           description: "Lounge created.",
-        })
+        });
+      } else {
+        toast({
+          title: "Uh oh! Something went wrong.",
+          description: "Error occured joining lounge.",
+        });
+      }
+    } catch (err) {
+      toast({
+        title: "Uh oh! Something went wrong.",
+        description: "Error occured joining lounge.",
+      });
+    }
+  };
+
+  const submitCreate = async () => {
+    try {
+      if (loungeName == null || loungeName == "" || !loungeName.trim()){
+        throw new Error("Invalid input.")
+      }
+      const res = await fetch(`/api/create_lounge/${loungeName}/${userid}`);
+      setLoungeName("");
+      if (res.ok) {
+        toast({
+          title: "Success!",
+          description: "Lounge created.",
+        });
+        fetchUserId();
       } else {
         toast({
           title: "Uh oh! Something went wrong.",
           description: "Error occured creating lounge.",
-        })
+        });
       }
-    } catch(err){
+    } catch (err) {
       toast({
         title: "Uh oh! Something went wrong.",
         description: "Error occured creating lounge.",
-      })
+      });
     }
-  }
+  };
 
   const onChangeLoungeName = (e: ChangeEvent<HTMLInputElement>) => {
     setLoungeName(e.target.value);
-  }
+  };
 
   const onChangeInvite = (e: ChangeEvent<HTMLInputElement>) => {
     setLoungeId(e.target.value);
-  }
+  };
 
   const back = () => {
     setCreateLounge(false);
     setJoinLounge(false);
   };
 
-  function Create() {
-    return (
-      <>
-        <DialogHeader className="text-zinc-800 items-center justify-center">
-          <DialogTitle className="text-2xl">Setup Your Lounge</DialogTitle>
-          <DialogDescription className="text-center" text-align="center">
-            Give your new lounge a name. You can always change it later.
-          </DialogDescription>
-        </DialogHeader>
-        <Label className="text-lg p-0">Server Name</Label>
-        <Input id="name" type="text" placeholder="Server" onChange={onChangeLoungeName} value={loungeName}/>
-        <DialogFooter className="sm:justify-between">
-          <Button onClick={back} className="bg-zinc-100 text-zinc-600 hover:bg-slate-200">
-            Back
-          </Button>
-          <Button onClick={submitCreate} type="submit" className="bg-blue-500 text-zinc-100 hover:bg-blue-700 px-9">Create</Button>
-        </DialogFooter>
-      </>
-    );
-  }
-
-  function Join() {
-    return (
-      <>
-        <DialogHeader className="text-zinc-800 items-center justify-center">
-          <DialogTitle className="text-2xl">Join a Server</DialogTitle>
-          <DialogDescription className="text-center" text-align="center">
-            Enter an invite below to join an existing server.
-          </DialogDescription>
-        </DialogHeader>
-        <Label className="text-lg">Invite</Label>
-        <Input id="invite" type="text" placeholder="Invite" onChange={onChangeInvite} value={loungeId}/>
-        <DialogFooter className="sm:justify-between">
-          <Button onClick={back} className="bg-zinc-100 text-zinc-600 hover:bg-slate-200">Back</Button>
-          <Button type="submit" className="bg-blue-500 text-zinc-100 hover:bg-blue-700 px-9">Join</Button>
-        </DialogFooter>
-      </>
-    );
-  }
-
   return (
     <div className="fixed top-0 left-0 h-screen w-16 flex flex-col bg-zinc-300">
       <Toaster />
       <DMIcon />
       <Divider />
-      <LoungeIcon name="My Lounge" selectedLounge={selectedLounge} setSelectedLounge={setSelectedLounge} selectLounge={selectLounge}/>
+      {/* <div style={{ overflowY: "auto", overflowX: "hidden", maxHeight: "screen", scrollbarWidth: "none", msOverflowStyle: "none" }}> */}
+      {lounges &&
+        lounges.length > 0 &&
+        lounges.map((lounge) => (
+          
+          <LoungeIcon
+            key={lounge.lounge_id}
+            lounge={lounge}
+            selectedLounge={selectedLounge}
+            setSelectedLounge={setSelectedLounge}
+            selectLounge={selectLounge}
+          />
+        
+        ))}
+        {/* </div> */}
       <Dialog>
         <DialogTrigger>
+          <Divider />
           <AddIcon />
         </DialogTrigger>
         <DialogContent>
           {createLounge ? (
-            <Create />
+            <>
+              <DialogHeader className="text-zinc-800 items-center justify-center">
+                <DialogTitle className="text-2xl">
+                  Setup Your Lounge
+                </DialogTitle>
+                <DialogDescription className="text-center" text-align="center">
+                  Give your new lounge a name. You can always change it later.
+                </DialogDescription>
+              </DialogHeader>
+              {/* <form onSubmit={submitCreate}> */}
+                <Label className="text-lg p-0">Server Name</Label>
+                <Input
+                  id="name"
+                  type="text"
+                  placeholder="Server"
+                  onChange={onChangeLoungeName}
+                  value={loungeName}
+                />
+                <DialogFooter className="sm:justify-between">
+                  <Button
+                    onClick={back}
+                    className="bg-zinc-100 text-zinc-600 hover:bg-slate-200"
+                  >
+                    Back
+                  </Button>
+                  <DialogClose asChild>
+                  <Button
+                    onClick={submitCreate}
+                    type="submit"
+                    className="bg-blue-500 text-zinc-100 hover:bg-blue-700 px-9"
+                  >
+                    Create
+                  </Button>
+                  </DialogClose>
+                </DialogFooter>
+              {/* </form> */}
+            </>
           ) : joinLounge ? (
-            <Join />
+            <>
+              <DialogHeader className="text-zinc-800 items-center justify-center">
+                <DialogTitle className="text-2xl">Join a Server</DialogTitle>
+                <DialogDescription className="text-center" text-align="center">
+                  Enter an invite below to join an existing server.
+                </DialogDescription>
+              </DialogHeader>
+              {/* <form onSubmit={submitJoin}> */}
+                <Label className="text-lg">Invite</Label>
+                <Input
+                  id="invite"
+                  type="text"
+                  placeholder="Invite"
+                  onChange={onChangeInvite}
+                  value={loungeId}
+                />
+                <DialogFooter className="sm:pt-4 sm:justify-between">
+                  <Button
+                    onClick={back}
+                    className="bg-zinc-100 text-zinc-600 hover:bg-slate-200"
+                  >
+                    Back
+                  </Button>
+                  <DialogClose asChild>
+                  <Button
+                    onClick={submitJoin}
+                    type="submit"
+                    className="bg-blue-500 text-zinc-100 hover:bg-blue-700 px-9"
+                  >
+                    Join
+                  </Button>
+                  </DialogClose>
+                </DialogFooter>
+              {/* </form> */}
+            </>
           ) : (
             <>
               <DialogHeader className="text-zinc-800 items-center justify-center">

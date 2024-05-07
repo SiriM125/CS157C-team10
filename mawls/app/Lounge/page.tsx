@@ -7,16 +7,17 @@ import { useState, useEffect } from 'react';
 
 
 interface Lounge {
-  name: string | null;
+  lounge_name: string;
+  lounge_id: string;
 }
 
 export default function Dashboard() {
   const [username, setUsername] = useState("");
-  const [selectedLounge, setSelectedLounge] = useState<Lounge>();
+  const [selectedLounge, setSelectedLounge] = useState<Lounge | null>();
 
-  const selectLounge = (name: string | null) => {
-    setSelectedLounge({name})
-    console.log(name)
+  const selectLounge = (lounge : Lounge | null) => {
+    setSelectedLounge(lounge)
+    console.log(lounge)
   }
 
   useEffect(() => {
