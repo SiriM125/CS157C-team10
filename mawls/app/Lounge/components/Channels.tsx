@@ -59,7 +59,7 @@ const ChannelGroup = ({ channelGroup, channels }: ChannelGroupProps) => {
       </div>
       {expanded &&
         channels &&
-        channels.map((channel) => <ChannelTab channel={channel} />)}
+        channels.map((channel) => <ChannelTab key={channel} channel={channel} />)}
     </div>
   );
 };

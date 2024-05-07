@@ -22,8 +22,20 @@ import { Toaster } from "@/components/ui/toaster";
 import { useToast } from "@/components/ui/use-toast";
 import React, { useState, useEffect, ChangeEvent } from "react";
 
+
+interface Props {
+  selectLounge: (name: string | null) => Promise<void> | void;
+}
+
+interface Lounge {
+  name: string | null;
+}
+
 interface IconProps {
   name: string;
+  selectedLounge: Lounge | null;
+  setSelectedLounge: React.Dispatch<React.SetStateAction<Lounge | null>>;
+  selectLounge: (name: string | null) => Promise<void> | void;
 }
 
 const DMIcon = () => {
@@ -52,13 +64,27 @@ const AddIcon = () => {
   );
 };
 
-function LoungeIcon({ name }: IconProps) {
+function LoungeIcon({ name , selectedLounge, setSelectedLounge, selectLounge}: IconProps) {
   const abbreviatedName = name
     .split(" ") // Split the name into words
     .map((word) => word.charAt(0)) // Extract the first character of each word
     .join(""); // Join the extracted characters together
+
+
+  const toggleSelection = () => {
+    if (!selectedLounge || selectedLounge.name !== name){
+      selectLounge(name);
+      setSelectedLounge({name});
+    } else {
+      selectLounge(null);
+      setSelectedLounge(null);
+    }
+  } 
+
   return (
-    <div className="lounge-icon group unselectable">
+    <div onClick={toggleSelection} className={`group unselectable
+      ${selectedLounge?.name === name ? "lounge-selected" : "lounge-icon"}`
+    }>
       {abbreviatedName}
       <span className="lounge-tooltip group-hover:scale-100 unselectable">
         {name}
@@ -69,17 +95,36 @@ function LoungeIcon({ name }: IconProps) {
 
 const Divider = () => <hr className="lounge-hr" />;
 
-export default function Lounge() {
+export default function Lounge({selectLounge}: Props) {
   const [createLounge, setCreateLounge] = useState(false);
   const [joinLounge, setJoinLounge] = useState(false);
 
-  const [lounges, setLounges] = useState("");
   const [loungeId, setLoungeId] = useState("");
   const [loungeName, setLoungeName] = useState("");
   const [userid, setUserid] = useState("");
+  const [lounges, setLounges] = useState<Lounge[]>([]);
+  const [selectedLounge, setSelectedLounge] = useState<Lounge | null>(null);
+  const [currentLounge, setCurrentLounge] = useState<Lounge | null>(null);
   const { toast } = useToast();
 
-  useEffect(() => {
+  const fetchLounges = () => {
+    fetch(`/api/user_lounges/${userid}`)
+      .then(response => {
+        if (response.ok) {
+          return response.json();
+        } else {
+          throw new Error('Failed to get lounges');
+        }
+      })
+      .then(data => {
+        setLounges(data.lounges);
+      })
+      .catch(error => {
+        console.error('Error fetching lounges:', error);
+    });
+  }
+
+  const fetchUserId = () => {
     fetch('/api/user_id')
     .then(response => {
       if (response.ok) {
@@ -94,6 +139,11 @@ export default function Lounge() {
     .catch(error => {
       console.error('Error fetching userid:', error);
     });
+  }
+
+  useEffect(() => {
+    fetchUserId();
+    fetchLounges();
   }, [])
 
   const submitCreate = async () => {
@@ -176,7 +226,7 @@ export default function Lounge() {
       <Toaster />
       <DMIcon />
       <Divider />
-      <LoungeIcon name="My Lounge" />
+      <LoungeIcon name="My Lounge" selectedLounge={selectedLounge} setSelectedLounge={setSelectedLounge} selectLounge={selectLounge}/>
       <Dialog>
         <DialogTrigger>
           <AddIcon />

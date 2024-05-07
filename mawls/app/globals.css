@@ -14,7 +14,13 @@
   }
 
   .lounge-selected{
-    @apply bg-blue-600 text-white rounded-xl;
+    @apply relative flex items-center justify-center 
+    h-12 w-12 mt-2 mb-2 mx-auto  
+  bg-blue-600 
+  text-white
+    rounded-xl
+    transition-all duration-300 ease-linear
+    cursor-pointer shadow-lg;
   }
 
   .lounge-tooltip {
