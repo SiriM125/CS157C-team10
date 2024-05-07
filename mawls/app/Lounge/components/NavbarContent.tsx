@@ -17,24 +17,33 @@ import {
 import Link from "next/link";
 import React, { useState, useEffect } from "react";
 
-const handleLogout = async () => {
-  try {
-    const response = await fetch(`/api/logout`);
-    if (response.ok) {
-      // Redirect to login page after successful logout
-      window.location.href = "/login";
-    } else {
-      console.error("Logout failed:", response.status);
-    }
-  } catch (error) {
-    console.error("Logout failed:", error);
-  }
-};
+interface Lounge {
+  lounge_name: string;
+  lounge_id: string;
+}
 
+interface Props {
+  selectedLounge: Lounge | null;
+}
 
-export default function NavbarContent() {
+export default function NavbarContent({selectedLounge}: Props) {
   //Fetch username
   const [username, setUsername] = useState("");
+
+  const handleLogout = async () => {
+    try {
+      const response = await fetch(`/api/logout`);
+      if (response.ok) {
+        // Redirect to login page after successful logout
+        window.location.href = "/login";
+      } else {
+        console.error("Logout failed:", response.status);
+      }
+    } catch (error) {
+      console.error("Logout failed:", error);
+    }
+  };
+
   useEffect(() => {
     fetch('/api/get_username')
       .then(response => {
@@ -60,7 +69,7 @@ export default function NavbarContent() {
         className="tracking-wider font-semibold text-zinc-500 ml-2 my-auto"
       />
       <div className="text-xl text-zinc-500 tracking-wider font-semibold text-opacity-80 mr-auto ml-2 my-auto unselectable">
-        main
+      {selectedLounge ? "main" : "select channel"}
       </div>
       <DropdownMenu>
         <DropdownMenuTrigger>
