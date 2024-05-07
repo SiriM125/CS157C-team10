@@ -131,9 +131,9 @@ def register(username, email, password):
         lounge_id = uuid.UUID("5467d1f9-8575-428d-9496-7494191f7dde") # Insert your UUID for the lounge here. //87826075-dfb2-420e-a8ef-71f889731ec3
         dbSession.execute(query, (user_id, email, password, username, [lounge_id]))
         
-        default_lounge_query = "SELECT * FROM lounge WHERE lounge_id = %s ALLOW FILTERING"
-        result = dbSession.execute(default_lounge_query, (lounge_id))
-        
+        # default_lounge_query = "SELECT * FROM lounge WHERE lounge_id = %s ALLOW FILTERING"
+        # result = dbSession.execute(default_lounge_query, (lounge_id))
+    
         if not result.one():
             create_lounge_query = "INSERT INTO lounge (lounge_id, lounge_name, creator_id) VALUES (%s, %s, %s)"
             dbSession.execute(create_lounge_query, (lounge_id, "MAWLS Lounge", None))
@@ -198,7 +198,29 @@ def create_lounge(lounge_name, user_id):
         dbSession.execute(query, (lounge_id, lounge_name, uuid.UUID(user_id)))
         add_lounge_query = "UPDATE user SET lounges = lounges + [%s] WHERE user_id = %s"
         dbSession.execute(add_lounge_query, (lounge_id, uuid.UUID(user_id)))  
-        return jsonify({'message': 'Lounge was created successfully', 'lounge_id': str(lounge_id)}), 201
+
+    # Create default channels
+        #main channel
+        main_channel_id = uuid.uuid4()
+        main_channel_query = "INSERT INTO channel (channel_id, channel_name, lounge_id) VALUES (%s, %s, %s)"
+        dbSession.execute(main_channel_query, (main_channel_id, "main", lounge_id))
+
+        # off-topic channel
+        off_topic_channel_id = uuid.uuid4()
+        off_topic_channel_query = "INSERT INTO channel (channel_id, channel_name, lounge_id) VALUES (%s, %s, %s)"
+        dbSession.execute(off_topic_channel_query, (off_topic_channel_id, "off topic", lounge_id))
+
+        # lecture channel
+        lecture_channel_id = uuid.uuid4()
+        lecture_channel_query = "INSERT INTO channel (channel_id, channel_name, lounge_id) VALUES (%s, %s, %s)"
+        dbSession.execute(lecture_channel_query, (lecture_channel_id, "lecture", lounge_id))
+
+        # homework channel
+        homework_channel_id = uuid.uuid4()
+        homework_channel_query = "INSERT INTO channel (channel_id, channel_name, lounge_id) VALUES (%s, %s, %s)"
+        dbSession.execute(homework_channel_query, (homework_channel_id, "homework", lounge_id))
+
+        return jsonify({'message': 'Lounge was created successfully', 'lounge_id': lounge_id}), 201
     except Exception as e:
         print('Error:', e)
         return jsonify({'message': 'Server error occurred during lounge creation'}), 500
@@ -306,6 +328,25 @@ def create_channels(lounge_id):
         print('Error:', e)
         return jsonify({'message': 'Server error occurred during channel creation'}), 500
 
+
+ # Retrieve all channels by lounge ID
+@app.route("/api/lounge_channels/<lounge_id>")
+def lounges_channels(lounge_id):
+    try:
+        query = "SELECT * FROM channel WHERE lounge_id = %s ALLOW FILTERING"
+        result = dbSession.execute(query, (uuid.UUID(lounge_id),))
+        channels = []
+        for row in result:
+            channels.append({
+                'channel_id': str(row.channel_id),
+                'channel_name': row.channel_name,
+                'lounge_id': str(row.lounge_id)
+            })
+        return jsonify({'channels': channels}), 200
+    except Exception as e:
+        print('Error:', e)
+        return jsonify({'message': 'Server error occurred while retrieving channels'}), 500
+
 # # Create new channel
 # @app.route("/api/create_channel/<channel_name>/<channel_name/lounge_id>" )
 # def create_channel(channel_name, lounge_id):
@@ -409,10 +450,6 @@ db.create_keyspace_simple(name = "mawls", replication_factor=1)
 
 # Create tables
 db.sync_db()
-
-
-
-
 
 # EXPERIMENTS BELOW! 
 
