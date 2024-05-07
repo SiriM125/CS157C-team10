@@ -11,14 +11,24 @@ interface Lounge {
   lounge_id: string;
 }
 
+
 export default function Dashboard() {
   const [username, setUsername] = useState("");
   const [selectedLounge, setSelectedLounge] = useState<Lounge | null>(null);
+  const [selectedChannel, setSelectedChannel] = useState<string | null>(null);
 
   const selectLounge = (lounge : Lounge | null) => {
     setSelectedLounge(lounge)
+    if (!lounge || lounge === null){
+      setSelectedChannel(null);
+    }
     console.log(lounge)
   }
+
+  const selectChannel = (channel: string | null) => {
+    setSelectedChannel(channel);
+    console.log(channel)
+  } 
 
   useEffect(() => {
     // Fetch the username from the backend
@@ -56,8 +66,8 @@ export default function Dashboard() {
   return (
     <main className="overscroll" style={{ overflow: 'hidden' }}>
       <div className="flex">
-        <ChannelContent selectedLounge={selectedLounge}/>
-        <Channels selectedLounge={selectedLounge}/>
+        <ChannelContent selectedLounge={selectedLounge} selectedChannel={selectedChannel}/>
+        <Channels selectedLounge={selectedLounge} selectChannel={selectChannel} selectedChannel={selectedChannel}/>
         <SideBar selectLounge={selectLounge}/>
       </div>
     </main>
