@@ -26,6 +26,15 @@ interface UserProps{
   user: string;
 }
 
+interface Lounge {
+  lounge_name: string;
+  lounge_id: string;
+}
+
+interface Props {
+  selectedLounge: Lounge | null;
+}
+
 const ChannelTab = ({ channel }: ChannelTabProps) => {
   return (
     <div className="flex flex-row items-center justify-evenly mt-1 mr-auto ml-2 transition duration-300 ease-in-out">
@@ -68,7 +77,7 @@ function UserInfo ({user}: UserProps) {
   const abbreviatedUser = user
     .split(" ") // Split the name into words
     .map((word) => word.charAt(0)) // Extract the first character of each word
-    .join("").toUpperCase(); // Join the extracted characters together
+    .join(""); // Join the extracted characters together
   return (
     <div className="flex">
       <div className="flex rounded-lg hover:bg-zinc-100 p-1">
@@ -84,26 +93,36 @@ function UserInfo ({user}: UserProps) {
   );
 }
 
-export default function Channels() {
+export default function Channels({selectedLounge}: Props) {
   const [username, setUsername] = useState("");
+  const [selectedChannel, setSelectedChannel] = useState<string | null>(null);
+
+
   useEffect(() => {
     //Fetch username
     fetch("/api/get_username")
       .then((response) => response.json())
       .then((data) => setUsername(data.username))
       .catch((error) => console.error("Error fetching username:", error));
+    if (!selectedLounge){
+      setSelectedChannel(null)
+    }
   }, []);
+
   return (
     <div className="fixed w-60 h-screen left-0 m-0 ml-16 bg-zinc-200 overflow-hidden">
       <div className="flex items-center justify-center h-14 m-0 p-0 bg-zinc-200 border-b border-zinc-300">
         <div className="text-lg tracking-wider font-bold text-blue-500 mr-auto ml-4 my-auto align-middle unselectable">
-          My Lounge
+          {selectedLounge ? selectedLounge.lounge_name : "Select Lounge"}
         </div>
       </div>
-      <div className="flex flex-col items-center justify-start p-1 m-0">
+      {selectedLounge && (
+        <div className="flex flex-col items-center justify-start p-1 m-0">
         <ChannelGroup channelGroup="text" channels={["main", "off-topic"]} />
         <ChannelGroup channelGroup="help" channels={["lecture", "homework"]} />
       </div>
+      )}
+      
       <div className="fixed bottom-0 w-60 h-12 m-0 p-0 pt-1 px-1 bg-zinc-300 border-t border-zinc-400">
         <UserInfo user={username}/>
       </div>

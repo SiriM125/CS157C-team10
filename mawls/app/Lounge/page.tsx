@@ -13,7 +13,7 @@ interface Lounge {
 
 export default function Dashboard() {
   const [username, setUsername] = useState("");
-  const [selectedLounge, setSelectedLounge] = useState<Lounge | null>();
+  const [selectedLounge, setSelectedLounge] = useState<Lounge | null>(null);
 
   const selectLounge = (lounge : Lounge | null) => {
     setSelectedLounge(lounge)
@@ -56,8 +56,8 @@ export default function Dashboard() {
   return (
     <main className="overscroll" style={{ overflow: 'hidden' }}>
       <div className="flex">
-        <ChannelContent />
-        <Channels />
+        <ChannelContent selectedLounge={selectedLounge}/>
+        <Channels selectedLounge={selectedLounge}/>
         <SideBar selectLounge={selectLounge}/>
       </div>
     </main>
