@@ -259,12 +259,20 @@ def user_lounges(user_id):
             lounges = row.lounges
         
         if lounges:
-            return jsonify({'lounges': [str(lounge) for lounge in lounges]}), 200
+            lounge_details = []
+            for lounge_id in lounges:
+                query = "SELECT lounge_id, lounge_name FROM lounge WHERE lounge_id = %s ALLOW FILTERING"
+                result = dbSession.execute(query, (lounge_id,))
+                for row in result:
+                    lounge_details.append({'lounge_id': str(row.lounge_id), 'lounge_name': row.lounge_name})
+            
+            return jsonify({'lounges': lounge_details}), 200
         else:
             return jsonify({'message': 'User has no lounges'}), 404
     except Exception as e:
         print('Error:', e)
         return jsonify({'message': 'Server error occurred while retrieving user lounges'}), 500
+
  
 
 #------------------------CHANNELS--------------------------------  

@@ -53,7 +53,8 @@ export default function ChannelContent() {
       <NavbarContent />
       <div className="flex-grow items-center h-full w-full mt-0 ml-0 mx-auto px-3 pb-[130px] bg-zinc-100">
         <div className="flex flex-row h-full">
-          <ScrollArea className="flex-grow w-full">
+          {/* <ScrollArea className="flex-grow w-full"> */}
+          <div className="w-full" style={{ overflowY: "scroll", overflowX: "hidden", maxHeight: "screen",  }}>
             <Message
               content="Hey there! How's it going?"
               timestamp="2024-05-02 10:15 AM"
@@ -104,7 +105,8 @@ export default function ChannelContent() {
               timestamp="2024-05-02 05:45 PM"
               user="Jack"
             />
-          </ScrollArea>
+          {/* </ScrollArea> */}
+          </div>
         </div>
       </div>
       <div className="px-3">

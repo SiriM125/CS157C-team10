@@ -5,25 +5,19 @@ import Channels from "@/app/Lounge/components/Channels";
 import ChannelContent from "@/app/Lounge/components/ChannelContent";
 import { useState, useEffect } from 'react';
 
+
+interface Lounge {
+  lounge_name: string;
+  lounge_id: string;
+}
+
 export default function Dashboard() {
   const [username, setUsername] = useState("");
+  const [selectedLounge, setSelectedLounge] = useState<Lounge | null>();
 
-  const fetchLounges = () => {
-    fetch('/api/get_username')
-      .then(response => {
-        if (response.ok) {
-          return response.json();
-        } else {
-          throw new Error('Failed to get username');
-        }
-      })
-      .then(data => {
-        setUsername(data.username);
-      })
-      .catch(error => {
-        console.error('Error fetching username:', error);
-        window.location.href = '/login' //Send them back to login page if the username cannot be obtained.
-    });
+  const selectLounge = (lounge : Lounge | null) => {
+    setSelectedLounge(lounge)
+    console.log(lounge)
   }
 
   useEffect(() => {
@@ -64,7 +58,7 @@ export default function Dashboard() {
       <div className="flex">
         <ChannelContent />
         <Channels />
-        <SideBar />
+        <SideBar selectLounge={selectLounge}/>
       </div>
     </main>
   );
