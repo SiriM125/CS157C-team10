@@ -104,7 +104,8 @@ const ChannelTab = ({ channel, selectChannel, selectedChannel }: ChannelTabProps
     if (!selectedChannel || selectedChannel !== channel) {
       selectChannel(channel)
     } else {
-      selectChannel(null)
+      // change to null if you want to deselect to no channel
+      selectChannel(channel)
     }
   };
 

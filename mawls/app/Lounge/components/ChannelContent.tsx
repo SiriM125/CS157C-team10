@@ -2,7 +2,7 @@
 import NavbarContent from "./NavbarContent";
 import { PlusIcon } from "@radix-ui/react-icons";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import React, { useRef, useEffect, useState, useLayoutEffect } from 'react';
+import React, { useRef, useEffect, useState, useLayoutEffect, ChangeEvent } from 'react';
 
 interface Message {
   content: string;
@@ -22,6 +22,24 @@ interface Props {
 
 
 export default function ChannelContent({selectedLounge, selectedChannel}: Props) {
+  const [message, setMessage] = useState<string>("")
+
+  const sendMessage = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      if (message !== ""){
+        console.log(message);
+        setMessage("");
+      }
+    }
+  };
+
+
+
+  const onChangeMessage = (e: ChangeEvent<HTMLInputElement>) => {
+    e.preventDefault();
+    setMessage(e.target.value)
+  };
 
   function Message({ content, timestamp, user }: Message) {
     const abbreviatedUser = user
@@ -49,19 +67,7 @@ export default function ChannelContent({selectedLounge, selectedChannel}: Props)
     );
   }
   
-  function MessageBar() {
-    return (
-      <div className="flex flex-row items-center justify-between fixed w-full bottom-6 rounded-lg shadow-lg bg-zinc-300 px-4 h-12">
-        <PlusIcon scale={18} className="bg-zinc-500 text-zinc-300 rounded-3xl" />
-        <input
-          type="text"
-          placeholder="Message"
-          className="w-full bg-transparent outline-none ml-0 mr-auto px-2 text-zinc-700 cursor-text"
-          disabled={!selectedLounge}
-        />
-      </div>
-    );
-  }
+
   const scrollableContainerRef = useRef(null);
 
   useEffect(() => {
@@ -78,7 +84,7 @@ export default function ChannelContent({selectedLounge, selectedChannel}: Props)
       <div className="flex-grow items-center h-full w-full mt-0 ml-0 mx-auto px-3 pb-[130px] bg-zinc-100">
         <div className="flex flex-row h-full">
         <ScrollArea className="flex-grow w-full">
-          {selectedLounge && (
+          {selectedLounge && selectedChannel && (
           <div >
             <Message
               content="Hey there! How's it going?"
@@ -136,7 +142,22 @@ export default function ChannelContent({selectedLounge, selectedChannel}: Props)
         </div>
       </div>
       <div className="px-3">
-        <MessageBar />
+      <div className="flex flex-row items-center justify-between fixed w-full bottom-6 rounded-lg shadow-lg bg-zinc-300 px-4 h-12">
+        <PlusIcon scale={18} className="bg-zinc-500 text-zinc-300 rounded-3xl" />
+        
+        <input
+          id="message"
+          type="text"
+          placeholder="Message"
+          autoComplete="off"
+          className="w-full bg-transparent outline-none ml-0 mr-auto px-2 text-zinc-700 cursor-text"
+          disabled={!selectedLounge}
+          onChange={onChangeMessage}
+          value={message}
+          onKeyDown={sendMessage}
+        />
+        
+      </div>
       </div>
     </div>
   );
