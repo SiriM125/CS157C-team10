@@ -154,9 +154,20 @@ def get_username():
         return jsonify({'username': session['username']})
     else: 
         return jsonify({'message': 'Username not found'}), 404
+    
+# #Get user_id of current user
+# @app.route("/api/user_id")
+# def get_userID():
+#     # Check if user is logged in
+#     if 'logged_in' in session and session['logged_in']:
+#         # Retrieve username from session
+#         userID = session['user_id']
+#         return jsonify({'message': f'User ID, {userID}'})
+#     else:
+#         return jsonify({'message': 'You are not logged in'}), 401
 
 # Retrieve user ID based on username
-@app.route("/api/user_id/")
+@app.route("/api/user_id")
 def user_id():
     try:
         username = session['username']

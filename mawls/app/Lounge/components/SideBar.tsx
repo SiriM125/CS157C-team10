@@ -76,7 +76,7 @@ export default function Lounge() {
   const [lounges, setLounges] = useState("");
   const [loungeId, setLoungeId] = useState("");
   const [loungeName, setLoungeName] = useState("");
-  const [userid, setUserid] = useState();
+  const [userid, setUserid] = useState("");
   const { toast } = useToast();
 
   useEffect(() => {
