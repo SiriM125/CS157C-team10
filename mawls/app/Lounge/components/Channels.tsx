@@ -7,7 +7,7 @@ import {
   ChevronRightIcon,
 } from "@radix-ui/react-icons";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 
 interface ChannelGroupProps {
   channelGroup: string;
@@ -85,6 +85,14 @@ function UserInfo ({user}: UserProps) {
 }
 
 export default function Channels() {
+  const [username, setUsername] = useState("");
+  useEffect(() => {
+    //Fetch username
+    fetch("/api/get_username")
+      .then((response) => response.json())
+      .then((data) => setUsername(data.username))
+      .catch((error) => console.error("Error fetching username:", error));
+  }, []);
   return (
     <div className="fixed w-60 h-screen left-0 m-0 ml-16 bg-zinc-200 overflow-hidden">
       <div className="flex items-center justify-center h-14 m-0 p-0 bg-zinc-200 border-b border-zinc-300">
@@ -97,7 +105,7 @@ export default function Channels() {
         <ChannelGroup channelGroup="help" channels={["lecture", "homework"]} />
       </div>
       <div className="fixed bottom-0 w-60 h-12 m-0 p-0 pt-1 px-1 bg-zinc-300 border-t border-zinc-400">
-        <UserInfo user="brian"/>
+        <UserInfo user={username}/>
       </div>
     </div>
   );
