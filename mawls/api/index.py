@@ -154,7 +154,26 @@ def get_username():
         return jsonify({'username': session['username']})
     else: 
         return jsonify({'message': 'Username not found'}), 404
-    
+
+# Retrieve user ID based on username
+@app.route("/api/user_id/")
+def user_id():
+    try:
+        username = session['username']
+        query = "SELECT user_id FROM user WHERE username = %s ALLOW FILTERING"
+        result = dbSession.execute(query, (username,))
+        user_id = None
+        for row in result:
+            user_id = row.user_id
+            break  # Assuming username is unique, so we break after the first result
+
+        if user_id:
+            return jsonify({'user_id': str(user_id)}), 200
+        else:
+            return jsonify({'message': 'User not found'}), 404
+    except Exception as e:
+        print('Error:', e)
+        return jsonify({'message': 'Server error occurred while retrieving user ID'}), 500
 
     
 #------------------------LOUNGES-------------------------------- 
@@ -217,7 +236,25 @@ def exit_lounge(user_id, lounge_id):
     except Exception as e:
         print('Error:', e)
         return jsonify({'message': 'Server error occurred during exit from lounge'}), 500
-    
+
+ # Retrieve all lounges by user ID
+@app.route("/api/user_lounges/<user_id>")
+def user_lounges(user_id):
+    try:
+        query = "SELECT lounges FROM user WHERE user_id = %s"
+        result = dbSession.execute(query, (uuid.UUID(user_id),))
+        lounges = []
+        for row in result:
+            lounges = row.lounges
+        
+        if lounges:
+            return jsonify({'lounges': [str(lounge) for lounge in lounges]}), 200
+        else:
+            return jsonify({'message': 'User has no lounges'}), 404
+    except Exception as e:
+        print('Error:', e)
+        return jsonify({'message': 'Server error occurred while retrieving user lounges'}), 500
+ 
 
 #------------------------CHANNELS--------------------------------  
 

@@ -18,7 +18,9 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import React, { useState, useEffect } from "react";
+import { Toaster } from "@/components/ui/toaster";
+import { useToast } from "@/components/ui/use-toast";
+import React, { useState, useEffect, ChangeEvent } from "react";
 
 interface IconProps {
   name: string;
@@ -71,6 +73,59 @@ export default function Lounge() {
   const [createLounge, setCreateLounge] = useState(false);
   const [joinLounge, setJoinLounge] = useState(false);
 
+  const [lounges, setLounges] = useState("");
+  const [loungeId, setLoungeId] = useState("");
+  const [loungeName, setLoungeName] = useState("");
+  const [userid, setUserid] = useState();
+  const { toast } = useToast();
+
+  useEffect(() => {
+    fetch('/api/user_id')
+    .then(response => {
+      if (response.ok) {
+        return response.json();
+      } else {
+        throw new Error('Failed to get userid');
+      }
+    })
+    .then(data => {
+      setUserid(data.user_id);
+    })
+    .catch(error => {
+      console.error('Error fetching userid:', error);
+    });
+  }, [])
+
+  const submitCreate = async () => {
+    try{
+      const res = await fetch(`/api/create_lounge/${loungeName}/${userid}`)
+      if (res.ok){
+        toast({
+          title: "Success!",
+          description: "Lounge created.",
+        })
+      } else {
+        toast({
+          title: "Uh oh! Something went wrong.",
+          description: "Error occured creating lounge.",
+        })
+      }
+    } catch(err){
+      toast({
+        title: "Uh oh! Something went wrong.",
+        description: "Error occured creating lounge.",
+      })
+    }
+  }
+
+  const onChangeLoungeName = (e: ChangeEvent<HTMLInputElement>) => {
+    setLoungeName(e.target.value);
+  }
+
+  const onChangeInvite = (e: ChangeEvent<HTMLInputElement>) => {
+    setLoungeId(e.target.value);
+  }
+
   const back = () => {
     setCreateLounge(false);
     setJoinLounge(false);
@@ -86,12 +141,12 @@ export default function Lounge() {
           </DialogDescription>
         </DialogHeader>
         <Label className="text-lg p-0">Server Name</Label>
-        <Input id="name" type="text" placeholder="Server" />
+        <Input id="name" type="text" placeholder="Server" onChange={onChangeLoungeName} value={loungeName}/>
         <DialogFooter className="sm:justify-between">
           <Button onClick={back} className="bg-zinc-100 text-zinc-600 hover:bg-slate-200">
             Back
           </Button>
-          <Button type="submit" className="bg-blue-500 text-zinc-100 hover:bg-blue-700 px-9">Create</Button>
+          <Button onClick={submitCreate} type="submit" className="bg-blue-500 text-zinc-100 hover:bg-blue-700 px-9">Create</Button>
         </DialogFooter>
       </>
     );
@@ -107,7 +162,7 @@ export default function Lounge() {
           </DialogDescription>
         </DialogHeader>
         <Label className="text-lg">Invite</Label>
-        <Input id="invite" type="text" placeholder="Invite" />
+        <Input id="invite" type="text" placeholder="Invite" onChange={onChangeInvite} value={loungeId}/>
         <DialogFooter className="sm:justify-between">
           <Button onClick={back} className="bg-zinc-100 text-zinc-600 hover:bg-slate-200">Back</Button>
           <Button type="submit" className="bg-blue-500 text-zinc-100 hover:bg-blue-700 px-9">Join</Button>
@@ -118,6 +173,7 @@ export default function Lounge() {
 
   return (
     <div className="fixed top-0 left-0 h-screen w-16 flex flex-col bg-zinc-300">
+      <Toaster />
       <DMIcon />
       <Divider />
       <LoungeIcon name="My Lounge" />

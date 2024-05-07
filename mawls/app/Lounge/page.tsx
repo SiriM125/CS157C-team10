@@ -8,6 +8,24 @@ import { useState, useEffect } from 'react';
 export default function Dashboard() {
   const [username, setUsername] = useState("");
 
+  const fetchLounges = () => {
+    fetch('/api/get_username')
+      .then(response => {
+        if (response.ok) {
+          return response.json();
+        } else {
+          throw new Error('Failed to get username');
+        }
+      })
+      .then(data => {
+        setUsername(data.username);
+      })
+      .catch(error => {
+        console.error('Error fetching username:', error);
+        window.location.href = '/login' //Send them back to login page if the username cannot be obtained.
+    });
+  }
+
   useEffect(() => {
     // Fetch the username from the backend
     fetch('/api/get_username')
