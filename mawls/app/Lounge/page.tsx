@@ -21,6 +21,8 @@ export default function Dashboard() {
     setSelectedLounge(lounge)
     if (!lounge || lounge === null){
       setSelectedChannel(null);
+    } else {
+      setSelectedChannel("main")
     }
     console.log(lounge)
   }
