@@ -155,16 +155,6 @@ def get_username():
     else: 
         return jsonify({'message': 'Username not found'}), 404
     
-# #Get user_id of current user
-# @app.route("/api/user_id")
-# def get_userID():
-#     # Check if user is logged in
-#     if 'logged_in' in session and session['logged_in']:
-#         # Retrieve username from session
-#         userID = session['user_id']
-#         return jsonify({'message': f'User ID, {userID}'})
-#     else:
-#         return jsonify({'message': 'You are not logged in'}), 401
 
 # Retrieve user ID based on username
 @app.route("/api/user_id")
@@ -185,6 +175,28 @@ def user_id():
     except Exception as e:
         print('Error:', e)
         return jsonify({'message': 'Server error occurred while retrieving user ID'}), 500
+
+# Retrieve a username based on user_id (for messages)
+@app.route("/api/get_msg_username/<user_id>")
+def get_msg_username(user_id):
+    try:
+        user_id = uuid.UUID(user_id)
+        query = "SELECT username FROM user WHERE user_id = %s ALLOW FILTERING"
+        result = dbSession.execute(query, (user_id,))
+        username = None
+        for row in result:
+            username = row.username
+            break  # Assuming username is unique, so we break after the first result
+
+        if username:
+            return jsonify({'username': str(username)}), 200
+        else:
+            return jsonify({'message': 'User not found'}), 404
+    except ValueError:
+        return jsonify({'message': 'Invalid user_id format'}), 400
+    except Exception as e:
+        print('Error:', e)
+        return jsonify({'message': 'Server error occurred while retrieving username given a user_id'}), 500
 
     
 #------------------------LOUNGES-------------------------------- 

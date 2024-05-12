@@ -11,23 +11,29 @@ interface Lounge {
   lounge_id: string;
 }
 
+interface Channel {
+  channel_id: string;
+  channel_name: string;
+}
+
 
 export default function Dashboard() {
   const [username, setUsername] = useState("");
   const [selectedLounge, setSelectedLounge] = useState<Lounge | null>(null);
-  const [selectedChannel, setSelectedChannel] = useState<string | null>(null);
+  const [selectedChannel, setSelectedChannel] = useState<Channel | null>(null);
 
   const selectLounge = (lounge : Lounge | null) => {
     setSelectedLounge(lounge)
-    if (!lounge || lounge === null){
+    // if (!lounge || lounge === null){
       setSelectedChannel(null);
-    } else {
-      setSelectedChannel("main")
-    }
+    // } 
+    // else {
+    //   setSelectedChannel("main")
+    // }
     console.log(lounge)
   }
 
-  const selectChannel = (channel: string | null) => {
+  const selectChannel = (channel: Channel | null) => {
     setSelectedChannel(channel);
     console.log(channel)
   } 

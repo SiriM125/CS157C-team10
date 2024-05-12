@@ -22,9 +22,14 @@ interface Lounge {
   lounge_id: string;
 }
 
+interface Channel {
+  channel_id: string;
+  channel_name: string;
+}
+
 interface Props {
   selectedLounge: Lounge | null;
-  selectedChannel: string | null;
+  selectedChannel: Channel | null;
 }
 
 export default function NavbarContent({selectedLounge, selectedChannel}: Props) {
@@ -70,7 +75,7 @@ export default function NavbarContent({selectedLounge, selectedChannel}: Props) 
         className="tracking-wider font-semibold text-zinc-500 ml-2 my-auto"
       />
       <div className="text-xl text-zinc-500 tracking-wider font-semibold text-opacity-80 mr-auto ml-2 my-auto unselectable">
-      {selectedLounge && selectedChannel ? selectedChannel : "select channel"}
+      {selectedLounge && selectedChannel ? selectedChannel.channel_name : "select channel"}
       </div>
       <DropdownMenu>
         <DropdownMenuTrigger>
