@@ -28,16 +28,67 @@ interface Props {
 export default function ChannelContent({ selectedLounge, selectedChannel }: Props) {
   const [message, setMessage] = useState<string>('');
   const [messages, setMessages] = useState<Message[]>([]);
+  
+  const sendMessage = async (e: React.KeyboardEvent<HTMLInputElement>) => {
+  if (e.key === 'Enter') {
+    e.preventDefault();
+    if (message.trim() !== '' && selectedChannel) {
+      try {
+        // Fetch user ID and username concurrently
+        const [userIdResponse, usernameResponse] = await Promise.all([
+          fetch("/api/user_id"),
+          fetch("/api/username")
+        ]);
+        
+        if (!userIdResponse.ok) {
+          throw new Error("Failed to get userid");
+        }
+        
+        const userData = await userIdResponse.json();
+        const senderId = userData.user_id;
+        console.log("Fetched user_id:", senderId);
 
-  const sendMessage = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      if (message !== '') {
-        console.log(message);
-        setMessage('');
+
+        if (!usernameResponse.ok) {
+          throw new Error("Failed to get username");
+        }
+        
+        const usernameData = await usernameResponse.json();
+        const username = usernameData.username;
+        console.log("Fetched username:", username);
+
+
+        // Send message
+        const response = await fetch(`/api/create_message/${selectedChannel.channel_id}/${senderId}/${encodeURIComponent(message)}`, {
+          method: 'POST',
+        });
+        
+        if (response.ok) {
+
+          console.log('Message sent successfully');
+          
+          const now = new Date();
+          const formattedTimestamp = `${now.getFullYear()}-${(now.getMonth() + 1).toString().padStart(2, '0')}-${now.getDate().toString().padStart(2, '0')} ${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}:${now.getSeconds().toString().padStart(2, '0')}`;
+          const newMessage: Message = {
+            content: message,
+            message_timestamp: formattedTimestamp,
+            user: username, 
+            sender_id: senderId 
+          };
+
+          setMessages(prevMessages => [...prevMessages, newMessage]); // Add new message to messages state
+
+          setMessage('');
+        } else {
+          throw new Error('Failed to send message');
+        }
+      } catch (error) {
+        console.error('Error sending message:', error);
       }
     }
-  };
+  }
+};
+
 
   const onChangeMessage = (e: ChangeEvent<HTMLInputElement>) => {
     e.preventDefault();
@@ -74,9 +125,9 @@ export default function ChannelContent({ selectedLounge, selectedChannel }: Prop
 
   // Clear messages when selected lounge changes
   useEffect(() => {
-    console.log("Selected lounge changed. Clearing messages.");
+    console.log("Selected lounge/channel changed. Clearing messages.");
     setMessages([]);
-  }, [selectedLounge]);
+  }, [selectedLounge, selectedChannel]);
 
   useEffect(() => {
     const fetchMessages = async () => {
@@ -94,7 +145,13 @@ export default function ChannelContent({ selectedLounge, selectedChannel }: Prop
             const username = await getUsername(message.sender_id);
             return { ...message, user: username || 'Unknown User' };
           }));
-  
+          
+          // Sort messages by timestamp
+          updatedMessages.sort((a, b) => {
+            const timestampA = new Date(a.message_timestamp).getTime();
+            const timestampB = new Date(b.message_timestamp).getTime();
+            return timestampA - timestampB;
+          });
           setMessages(updatedMessages); // Set the received messages with usernames
         } else {
           throw new Error('Failed to fetch messages');
@@ -156,7 +213,7 @@ export default function ChannelContent({ selectedLounge, selectedChannel }: Prop
             placeholder="Message"
             autoComplete="off"
             className="w-full bg-transparent outline-none ml-0 mr-auto px-2 text-zinc-700 cursor-text"
-            disabled={!selectedLounge}
+            disabled={!selectedLounge || !selectedChannel}
             onChange={onChangeMessage}
             value={message}
             onKeyDown={sendMessage}

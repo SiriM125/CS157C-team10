@@ -72,9 +72,9 @@ def username():
     if 'logged_in' in session and session['logged_in']:
         # Retrieve username from session
         username = session['username']
-        return jsonify({'message': f'Welcome, {username}!'})
+        return jsonify({'username': username})
     else:
-        return jsonify({'message': 'You are not logged in'}), 401
+        return jsonify({'message': 'User not found'}), 401
 
 
 #------------------------REGISTER--------------------------------  
@@ -376,7 +376,7 @@ def lounges_channels(lounge_id):
 #------------------------MESSAGES--------------------------------  
 
 #Create new message
-@app.route("/api/create_message/<channel_id>/<sender_id>/<content>", methods=['POST'])
+@app.route("/api/create_message/<channel_id>/<sender_id>/<path:content>", methods=['POST'])
 def create_message(channel_id, sender_id, content):
     try:
         message_id = uuid.uuid4()
