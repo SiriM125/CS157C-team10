@@ -5,7 +5,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface Message {
   content: string;
-  timestamp: string;
+  message_timestamp: string;
   user: string;
   sender_id: string;
 }
@@ -45,11 +45,12 @@ export default function ChannelContent({ selectedLounge, selectedChannel }: Prop
   };
 
   
-  function Message({ content, timestamp, user }: Message) {
+  function Message({ content, message_timestamp: timestamp, user }: Message) {
     const abbreviatedUser = user
       .split(' ')
       .map((word) => word.charAt(0))
       .join('');
+      console.log(timestamp)
     return (
       <div className="w-full flex flex-row items-center py-4 px-8 m-0 hover:bg-zinc-200">
         <div className="relative flex items-center justify-center rounded-3xl bg-blue-500 text-white h-12 w-12 unselectable">
@@ -59,7 +60,9 @@ export default function ChannelContent({ selectedLounge, selectedChannel }: Prop
         <div className="flex flex-col justify-start ml-4">
           <div className="text-sm text-left font-semibold text-gray-800 mr-2">
             {user}
-            <small className="text-xs text-left font-semibold text-zinc-500 ml-2">{timestamp}</small>
+            <small className="text-xs text-left font-semibold text-zinc-500 ml-2">
+              {timestamp}
+            </small>
           </div>
           <div className="text-md text-left text-zinc-800 whitespace-normal mr-auto">{content}</div>
         </div>
@@ -87,6 +90,7 @@ export default function ChannelContent({ selectedLounge, selectedChannel }: Prop
           
           // Fetch usernames for each sender_id, and adds it in.
           const updatedMessages = await Promise.all(data.messages.map(async (message : Message) => {
+            console.log("Message with timestamp:", message.message_timestamp); // Log timestamp of each message
             const username = await getUsername(message.sender_id);
             return { ...message, user: username || 'Unknown User' };
           }));
@@ -131,7 +135,7 @@ export default function ChannelContent({ selectedLounge, selectedChannel }: Prop
           {messages.map((message) => (
             <Message
               content={message.content}
-              timestamp={message.timestamp}
+              message_timestamp={message.message_timestamp}
               user = {message.user}
               sender_id={message.sender_id}
             />
