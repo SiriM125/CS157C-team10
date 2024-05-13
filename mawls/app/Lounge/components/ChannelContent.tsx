@@ -69,10 +69,13 @@ export default function ChannelContent({ selectedLounge, selectedChannel }: Prop
           const senderId = userData.user_id;
 
           //emit message via websocket
+          const now = new Date();
+          const formattedTimestamp = `${now.getFullYear()}-${(now.getMonth() + 1).toString().padStart(2, '0')}-${now.getDate().toString().padStart(2, '0')} ${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}:${now.getSeconds().toString().padStart(2, '0')}`;
+          
           if (socket.current) {
             const newMessage: Message = {
               content: message,
-              message_timestamp: new Date().toISOString().split('.')[0],
+              message_timestamp: formattedTimestamp, //new Date().toISOString().split('.')[0],
               user: username,
               sender_id: senderId
             };
@@ -97,7 +100,7 @@ export default function ChannelContent({ selectedLounge, selectedChannel }: Prop
           console.log('Message sent successfully');
           
           const now = new Date();
-          const formattedTimestamp = `${now.getFullYear()}-${(now.getMonth() + 1).toString().padStart(2, '0')}-${now.getDate().toString().padStart(2, '0')} ${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}:${now.getSeconds().toString().padStart(2, '0')}`;
+          //const formattedTimestamp = `${now.getFullYear()}-${(now.getMonth() + 1).toString().padStart(2, '0')}-${now.getDate().toString().padStart(2, '0')} ${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}:${now.getSeconds().toString().padStart(2, '0')}`;
           const newMessage: Message = {
             content: message,
             message_timestamp: formattedTimestamp,
@@ -147,9 +150,6 @@ export default function ChannelContent({ selectedLounge, selectedChannel }: Prop
             <small className="text-xs text-left font-semibold text-zinc-500 ml-2">
               {timestamp}
             </small>
-            <small className="text-xs text-left font-semibold text-zinc-500 ml-2">
-              {timestamp}
-            </small>
           </div>
           <div className="text-md text-left text-zinc-800 whitespace-normal mr-auto">{content}</div>
         </div>
@@ -190,12 +190,6 @@ export default function ChannelContent({ selectedLounge, selectedChannel }: Prop
             return timestampA - timestampB;
           });
           
-          // Sort messages by timestamp
-          updatedMessages.sort((a, b) => {
-            const timestampA = new Date(a.message_timestamp).getTime();
-            const timestampB = new Date(b.message_timestamp).getTime();
-            return timestampA - timestampB;
-          });
           setMessages(updatedMessages); // Set the received messages with usernames
         } else {
           throw new Error('Failed to fetch messages');
@@ -233,9 +227,10 @@ export default function ChannelContent({ selectedLounge, selectedChannel }: Prop
 
   return (
     <div className="fixed pl-[304px] m-0 h-screen w-full overflow-hidden">
+      <div className="flex-grow items-center h-full w-full mt-0 ml-0 mx-auto px-0 pb-[130px] bg-zinc-100">
       <NavbarContent selectedLounge={selectedLounge} selectedChannel={selectedChannel}/>
-      <div className="flex-grow items-center h-full w-full mt-0 ml-0 mx-auto px-3 pb-[130px] bg-zinc-100">
-        <div className="flex flex-row h-full">
+      
+        <div className="flex flex-row h-full px-3">
 
           {/* Message display area here! */}
           <ScrollArea className="flex-grow w-full">
