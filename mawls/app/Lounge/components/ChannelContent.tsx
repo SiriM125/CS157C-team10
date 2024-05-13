@@ -8,7 +8,6 @@ import { Socket } from 'socket.io-client';
 interface Message {
   content: string;
   message_timestamp: string;
-  message_timestamp: string;
   user: string;
   sender_id: string;
 }
@@ -166,7 +165,6 @@ export default function ChannelContent({ selectedLounge, selectedChannel }: Prop
     console.log("Selected lounge/channel changed. Clearing messages.");
     setMessages([]);
   }, [selectedLounge, selectedChannel]);
-  }, [selectedLounge, selectedChannel]);
 
   useEffect(() => {
     const fetchMessages = async () => {
@@ -180,7 +178,6 @@ export default function ChannelContent({ selectedLounge, selectedChannel }: Prop
           
           // Fetch usernames for each sender_id, and adds it in.
           const updatedMessages = await Promise.all(data.messages.map(async (message : Message) => {
-            console.log("Message with timestamp:", message.message_timestamp); // Log timestamp of each message
             console.log("Message with timestamp:", message.message_timestamp); // Log timestamp of each message
             const username = await getUsername(message.sender_id);
             return { ...message, user: username || 'Unknown User' };
@@ -266,7 +263,6 @@ export default function ChannelContent({ selectedLounge, selectedChannel }: Prop
             placeholder="Message"
             autoComplete="off"
             className="w-full bg-transparent outline-none ml-0 mr-auto px-2 text-zinc-700 cursor-text"
-            disabled={!selectedLounge || !selectedChannel}
             disabled={!selectedLounge || !selectedChannel}
             onChange={onChangeMessage}
             value={message}
