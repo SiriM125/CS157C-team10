@@ -8,6 +8,7 @@ import { Socket } from 'socket.io-client';
 interface Message {
   content: string;
   message_timestamp: string;
+  message_timestamp: string;
   user: string;
   sender_id: string;
 }
@@ -147,6 +148,9 @@ export default function ChannelContent({ selectedLounge, selectedChannel }: Prop
             <small className="text-xs text-left font-semibold text-zinc-500 ml-2">
               {timestamp}
             </small>
+            <small className="text-xs text-left font-semibold text-zinc-500 ml-2">
+              {timestamp}
+            </small>
           </div>
           <div className="text-md text-left text-zinc-800 whitespace-normal mr-auto">{content}</div>
         </div>
@@ -159,7 +163,9 @@ export default function ChannelContent({ selectedLounge, selectedChannel }: Prop
   // Clear messages when selected lounge or channel changes
   useEffect(() => {
     console.log("Selected lounge/channel changed. Clearing messages.");
+    console.log("Selected lounge/channel changed. Clearing messages.");
     setMessages([]);
+  }, [selectedLounge, selectedChannel]);
   }, [selectedLounge, selectedChannel]);
 
   useEffect(() => {
@@ -175,9 +181,17 @@ export default function ChannelContent({ selectedLounge, selectedChannel }: Prop
           // Fetch usernames for each sender_id, and adds it in.
           const updatedMessages = await Promise.all(data.messages.map(async (message : Message) => {
             console.log("Message with timestamp:", message.message_timestamp); // Log timestamp of each message
+            console.log("Message with timestamp:", message.message_timestamp); // Log timestamp of each message
             const username = await getUsername(message.sender_id);
             return { ...message, user: username || 'Unknown User' };
           }));
+          
+          // Sort messages by timestamp
+          updatedMessages.sort((a, b) => {
+            const timestampA = new Date(a.message_timestamp).getTime();
+            const timestampB = new Date(b.message_timestamp).getTime();
+            return timestampA - timestampB;
+          });
           
           // Sort messages by timestamp
           updatedMessages.sort((a, b) => {
@@ -252,6 +266,7 @@ export default function ChannelContent({ selectedLounge, selectedChannel }: Prop
             placeholder="Message"
             autoComplete="off"
             className="w-full bg-transparent outline-none ml-0 mr-auto px-2 text-zinc-700 cursor-text"
+            disabled={!selectedLounge || !selectedChannel}
             disabled={!selectedLounge || !selectedChannel}
             onChange={onChangeMessage}
             value={message}
