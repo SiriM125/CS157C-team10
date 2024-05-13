@@ -88,12 +88,14 @@ function LoungeIcon({
   return (
     <div
       onClick={toggleSelection}
-      className={`group unselectable
+      className={`group
       ${selectedLounge?.lounge_id === lounge.lounge_id ? "lounge-selected" : "lounge-icon"}`}
     >
       {abbreviatedName}
-      <span className="lounge-tooltip group-hover:scale-100 unselectable">
-        {lounge.lounge_name}
+      <span className="lounge-tooltip group-hover:scale-75 bg-blue-300">
+          {lounge.lounge_name}
+          <br></br>
+          ID : {lounge.lounge_id}
       </span>
     </div>
   );

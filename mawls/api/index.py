@@ -1,4 +1,5 @@
 from datetime import datetime
+from socket import create_server
 from flask import Flask, jsonify, session
 from flask_cqlalchemy import CQLAlchemy
 from flask_session import Session
@@ -9,6 +10,8 @@ import os
 from flask_cors import CORS
 from cassandra.cluster import Cluster
 
+from flask_socketio import SocketIO, join_room
+
 
 app = Flask(__name__)
 CORS(app)
@@ -18,6 +21,11 @@ app.config['SECRET_KEY'] = os.urandom(24)
 
 Session(app)
 
+@app.route('/')
+def index():
+    session_id = session.sid
+    return f'Session ID: {session_id}'
+
 app.config['CASSANDRA_HOSTS'] = ['127.0.0.1']
 app.config['CASSANDRA_KEYSPACE'] = 'mawls'
 
@@ -25,6 +33,9 @@ cluster = Cluster(['127.0.0.1'])
 dbSession = cluster.connect('mawls')
 
 db = CQLAlchemy(app)
+
+socketio = SocketIO(app)
+
 
 
 #------------------------LOG IN--------------------------------  
@@ -72,9 +83,9 @@ def username():
     if 'logged_in' in session and session['logged_in']:
         # Retrieve username from session
         username = session['username']
-        return jsonify({'message': f'Welcome, {username}!'})
+        return jsonify({'username': username})
     else:
-        return jsonify({'message': 'You are not logged in'}), 401
+        return jsonify({'message': 'User not found'}), 401
 
 
 #------------------------REGISTER--------------------------------  
@@ -375,19 +386,39 @@ def lounges_channels(lounge_id):
 
 #------------------------MESSAGES--------------------------------  
 
-#Create new message
-@app.route("/api/create_message/<channel_id>/<sender_id>/<content>", methods=['POST'])
+#broadcast message in channel
+@socketio.on('message')
+def handle_message(data):
+    channel = data.get('channel')
+    message = data.get('message')
+    socketio.emit('message', message, room=channel)
+
+# Create new message
+@app.route("/api/create_message/<channel_id>/<sender_id>/<path:content>", methods=['POST'])
 def create_message(channel_id, sender_id, content):
     try:
         message_id = uuid.uuid4()
         message_timestamp = datetime.now() 
         query = "INSERT INTO message (message_id, channel_id, sender_id, content, message_timestamp) VALUES (%s, %s, %s, %s, %s)"
         dbSession.execute(query, (message_id, uuid.UUID(channel_id), uuid.UUID(sender_id), content, message_timestamp))
+
+        room = channel_id 
+        join_room(room)
+        
+        message = {
+            'channel_id': channel_id,
+            'sender_id': sender_id,
+            'content': content,
+            'message_timestamp': datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        }
+        socketio.emit('message', message, room=room)
         
         return jsonify({'message': 'Message created successfully', 'message_id': str(message_id)}), 201
+    
     except Exception as e:
         print('Error:', e)
         return jsonify({'message': 'Server error occurred during message creation'}), 500
+
 
 #Retrieve messages from a specific channel
 @app.route("/api/get_messages/<channel_id>")
@@ -462,6 +493,9 @@ db.create_keyspace_simple(name = "mawls", replication_factor=1)
 
 # Create tables
 db.sync_db()
+
+if __name__ == '__main__':
+    socketio.run(app)
 
 # EXPERIMENTS BELOW! 
 
