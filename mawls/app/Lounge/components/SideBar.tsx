@@ -71,9 +71,11 @@ function LoungeIcon({
   selectLounge: (lounge : Lounge | null) => Promise<void> | void;
 }) {
 
-    const abbreviatedName = lounge.lounge_name?.split(" ")
-      .map((word: string) => word.charAt(0))
-      .join("").toUpperCase()
+  const { toast } = useToast();
+
+  const abbreviatedName = lounge.lounge_name?.split(" ")
+    .map((word: string) => word.charAt(0))
+    .join("").toUpperCase()
 
   const toggleSelection = () => {
     if (!selectedLounge || selectedLounge.lounge_id !== lounge.lounge_id) {
@@ -85,6 +87,14 @@ function LoungeIcon({
     }
   };
 
+  const handleCopyToClipboard = () => {
+    navigator.clipboard.writeText(lounge.lounge_id);
+    toast({
+      title: "Lounge id copied!",
+      description: "Copied lounge id.",
+    });
+  };
+
   return (
     <div
       onClick={toggleSelection}
@@ -94,12 +104,22 @@ function LoungeIcon({
       {abbreviatedName}
       <span className="lounge-tooltip group-hover:scale-75 bg-blue-300">
           {lounge.lounge_name}
-          <br></br>
-          ID : {lounge.lounge_id}
+          <br></br> 
+          ID :
+          <span onClick={(e) => {
+            e.stopPropagation(); 
+            handleCopyToClipboard();
+          }}
+          style={{ cursor: 'pointer', textDecoration: 'underline' }}>
+          {lounge.lounge_id}
+        </span>
+
       </span>
     </div>
   );
 }
+
+
 
 const Divider = () => <hr className="lounge-hr" />;
 
@@ -115,6 +135,7 @@ export default function Lounge({ selectLounge }: Props) {
   const [currentLounge, setCurrentLounge] = useState<Lounge | null>(null);
   const { toast } = useToast();
 
+  
   const fetchLounges = (user: string) => {
     console.log("fetch: " + user)
     fetch(`/api/user_lounges/${user}`)
@@ -221,6 +242,7 @@ export default function Lounge({ selectLounge }: Props) {
     setCreateLounge(false);
     setJoinLounge(false);
   };
+  
 
   return (
     <div className="fixed top-0 left-0 h-screen w-16 flex flex-col bg-zinc-300">
