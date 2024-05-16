@@ -403,7 +403,7 @@ def create_message(channel_id, sender_id, content):
         dbSession.execute(query, (message_id, uuid.UUID(channel_id), uuid.UUID(sender_id), content, message_timestamp))
 
         room = channel_id 
-        join_room(room)
+        #join_room(room)
         
         message = {
             'channel_id': channel_id,

@@ -49,80 +49,82 @@ export default function ChannelContent({ selectedLounge, selectedChannel }: Prop
     };
   }, [selectedChannel]);
   
-  const sendMessage = async (e: React.KeyboardEvent<HTMLInputElement>) => {
-  if (e.key === 'Enter') {
-    e.preventDefault();
-    if (message.trim() !== '' && selectedChannel) {
-      try {
-        // Fetch user ID and username concurrently
-        const [userIdResponse, usernameResponse] = await Promise.all([
-          fetch("/api/user_id"),
-          fetch("/api/username")
-        ]);
+  const sendMessage = async (e: React.KeyboardEvent<HTMLInputElement> | React.MouseEvent<SVGElement>) => {
+  if (!selectedChannel) return;
+  if (e && 'key' in e && e.key !== 'Enter') return;
+  if (message.trim() === '') return;
+  
+  if (message.trim() !== '' && selectedChannel) {
+    try {
+      // Fetch user ID and username concurrently
+      const [userIdResponse, usernameResponse] = await Promise.all([
+        fetch("/api/user_id"),
+        fetch("/api/username")
+      ]);
+      
+      if (!userIdResponse.ok) {
+        throw new Error("Failed to get userid");
+      }      
+        const userData = await userIdResponse.json();
+        const usernameData = await usernameResponse.json();
+        const username = usernameData.username;
+        const senderId = userData.user_id;
+
+        //emit message via websocket
+        const now = new Date();
+        const formattedTimestamp = `${now.getFullYear()}-${(now.getMonth() + 1).toString().padStart(2, '0')}-${now.getDate().toString().padStart(2, '0')} ${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}:${now.getSeconds().toString().padStart(2, '0')}`;
         
-        if (!userIdResponse.ok) {
-          throw new Error("Failed to get userid");
-        }      
-          const userData = await userIdResponse.json();
-          const usernameData = await usernameResponse.json();
-          const username = usernameData.username;
-          const senderId = userData.user_id;
-
-          //emit message via websocket
-          const now = new Date();
-          const formattedTimestamp = `${now.getFullYear()}-${(now.getMonth() + 1).toString().padStart(2, '0')}-${now.getDate().toString().padStart(2, '0')} ${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}:${now.getSeconds().toString().padStart(2, '0')}`;
-          
-          if (socket.current) {
-            const newMessage: Message = {
-              content: message,
-              message_timestamp: formattedTimestamp, //new Date().toISOString().split('.')[0],
-              user: username,
-              sender_id: senderId
-            };
-            socket.current.emit("message", newMessage);
-          }
-
-
-        if (!usernameResponse.ok) {
-          throw new Error("Failed to get username");
-        }
-        
-        console.log("Fetched username:", username);
-
-
-        // create message in database
-        const response = await fetch(`/api/create_message/${selectedChannel.channel_id}/${senderId}/${encodeURIComponent(message)}`, {
-          method: 'POST',
-        });
-        
-        if (response.ok) {
-
-          console.log('Message sent successfully');
-          
-          const now = new Date();
-          //const formattedTimestamp = `${now.getFullYear()}-${(now.getMonth() + 1).toString().padStart(2, '0')}-${now.getDate().toString().padStart(2, '0')} ${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}:${now.getSeconds().toString().padStart(2, '0')}`;
+        if (socket.current) {
           const newMessage: Message = {
             content: message,
-            message_timestamp: formattedTimestamp,
-            user: username, 
-            sender_id: senderId 
+            message_timestamp: formattedTimestamp, //new Date().toISOString().split('.')[0],
+            user: username,
+            sender_id: senderId
           };
-
-          setMessages(prevMessages => [...prevMessages, newMessage]);
-          setMessage('');
-          console.error('Message sent!');
-
-
-        } else {
-          setMessage('');
-          console.error("Error sending message.");
+          socket.current.emit("message", newMessage);
         }
-      } catch (error) {
-        setMessage('');
-        console.error('Error sending message:', error);
+
+
+      if (!usernameResponse.ok) {
+        throw new Error("Failed to get username");
       }
+      
+      console.log("Fetched username:", username);
+
+
+      // create message in database
+      const response = await fetch(`/api/create_message/${selectedChannel.channel_id}/${senderId}/${encodeURIComponent(message)}`, {
+        method: 'POST',
+      });
+      
+      if (response.ok) {
+
+        console.log('Message sent successfully');
+        
+        // const now = new Date();
+        // //const formattedTimestamp = `${now.getFullYear()}-${(now.getMonth() + 1).toString().padStart(2, '0')}-${now.getDate().toString().padStart(2, '0')} ${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}:${now.getSeconds().toString().padStart(2, '0')}`;
+        // const newMessage: Message = {
+        //   content: message,
+        //   message_timestamp: formattedTimestamp,
+        //   user: username, 
+        //   sender_id: senderId 
+        // };
+
+        // setMessages(prevMessages => [...prevMessages, newMessage]);
+        setMessage('');
+        console.error('Message sent!');
+
+
+      } else {
+        setMessage('');
+        console.error("Error sending message.");
+      }
+    } catch (error) {
+      setMessage('');
+      console.error('Error sending message:', error);
     }
   }
+  
 };
 
 
@@ -249,9 +251,9 @@ export default function ChannelContent({ selectedLounge, selectedChannel }: Prop
       </div>
 
 
-      <div className="px-3">
-        <div className="flex flex-row items-center justify-between fixed w-full bottom-6 rounded-lg shadow-lg bg-zinc-300 px-4 h-12">
-          <PlusIcon scale={18} className="bg-zinc-500 text-zinc-300 rounded-3xl" />
+    <div className="px-3 fixed bottom-4 left-[304px] w-[calc(100%-304px)]">
+      <div className="flex flex-row items-center justify-between w-full rounded-lg shadow-lg bg-zinc-300 px-4 h-12">
+          <PlusIcon scale={18} className="bg-zinc-500 text-zinc-300 rounded-3xl cursor-pointer" onClick={sendMessage} />
           <input
             id="message"
             type="text"
