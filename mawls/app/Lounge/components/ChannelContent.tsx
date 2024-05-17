@@ -30,8 +30,14 @@ interface Props {
 export default function ChannelContent({ selectedLounge, selectedChannel }: Props) {
   const [message, setMessage] = useState<string>('');
   const [messages, setMessages] = useState<Message[]>([]);
+
+  const [popupVisible, setPopupVisible] = useState<boolean>(false);
+  const [popupPosition, setPopupPosition] = useState<{ x: number, y: number } | null>(null);
+  const [selectedMessage, setSelectedMessage] = useState<Message | null>(null);
+  
   const socket = useRef<Socket>();
   const lastMessageRef = useRef<HTMLDivElement>(null);
+  const popupRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!selectedChannel || !selectedChannel.channel_id) return;
@@ -98,22 +104,8 @@ export default function ChannelContent({ selectedLounge, selectedChannel }: Prop
       });
       
       if (response.ok) {
-
-        console.log('Message sent successfully');
-        
-        // const now = new Date();
-        // //const formattedTimestamp = `${now.getFullYear()}-${(now.getMonth() + 1).toString().padStart(2, '0')}-${now.getDate().toString().padStart(2, '0')} ${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}:${now.getSeconds().toString().padStart(2, '0')}`;
-        // const newMessage: Message = {
-        //   content: message,
-        //   message_timestamp: formattedTimestamp,
-        //   user: username, 
-        //   sender_id: senderId 
-        // };
-
-        // setMessages(prevMessages => [...prevMessages, newMessage]);
         setMessage('');
         console.error('Message sent!');
-
 
       } else {
         setMessage('');
@@ -133,15 +125,48 @@ export default function ChannelContent({ selectedLounge, selectedChannel }: Prop
     setMessage(e.target.value);
   };
 
+  const handleEditClick = () => {
+    // Handle edit button click
+    console.log('Edit');
+    setPopupVisible(false); // Hide the popup
+  };
+
+  const handleDeleteClick = () => {
+    // Handle delete button click
+    console.log('Delete');
+    setPopupVisible(false); // Hide the popup
+  };
+
+  const handlePopupOutsideClick = (e: MouseEvent) => {
+    if (popupRef.current && !popupRef.current.contains(e.target as Node)) {
+      setPopupVisible(false); // Close popup if clicked outside
+    }
+  };
+
+  useEffect(() => {
+    document.addEventListener("mousedown", handlePopupOutsideClick);
+    return () => {
+      document.removeEventListener("mousedown", handlePopupOutsideClick);
+    };
+  }, []);
+
+  const handleMessageClick = (e: React.MouseEvent<HTMLDivElement>, message: Message) => {
+    setSelectedMessage(message);
+    setPopupPosition({ x: e.clientX, y: e.clientY });
+    setPopupVisible(true);
+  };
+
   
-  function Message({ content, message_timestamp: timestamp, user }: Message) {
+  function Message({ content, message_timestamp: timestamp, user , sender_id}: Message) {
     const abbreviatedUser = user ? user
     .split(' ')
     .map((word) => word.charAt(0))
     .join('') : '';
-  console.log(timestamp);
+
     return (
-      <div className="w-full flex flex-row items-center py-4 px-8 m-0 hover:bg-zinc-200">
+      <div className="w-full flex flex-row items-center py-4 px-8 m-0 hover:bg-zinc-200"
+      onClick={(e) => handleMessageClick(e, { content, message_timestamp: timestamp, user, sender_id})}
+      >
         <div className="relative flex items-center justify-center rounded-3xl bg-blue-500 text-white h-12 w-12 unselectable">
           {abbreviatedUser}
         </div>
@@ -249,7 +274,18 @@ export default function ChannelContent({ selectedLounge, selectedChannel }: Prop
           </ScrollArea>
         </div>
       </div>
-
+    
+      {/* Popup */}
+      {popupVisible && popupPosition && selectedMessage && (
+        <div
+          ref={popupRef}
+          className="absolute bg-white border border-gray-300 rounded shadow-md p-2"
+          style={{ top: popupPosition.y, left: popupPosition.x }}
+        >
+          <button className="block w-full text-left px-2 py-1 text-blue-500 hover:bg-gray-200 focus:bg-blue-500 focus:text-white rounded-md" onClick={handleEditClick}>Edit</button>
+          <button className="block w-full text-left px-2 py-1 text-red-500 hover:bg-gray-200 focus:bg-red-500 focus:text-white rounded-md" onClick={handleDeleteClick}>Delete</button>
+        </div>
+      )}
 
     <div className="px-3 fixed bottom-4 left-[304px] w-[calc(100%-304px)]">
       <div className="flex flex-row items-center justify-between w-full rounded-lg shadow-lg bg-zinc-300 px-4 h-12">
