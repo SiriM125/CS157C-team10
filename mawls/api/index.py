@@ -382,6 +382,43 @@ def create_channel(channel_name, lounge_id):
         print('Error:', e)
         return jsonify({'message': 'Server error occurred during channel creation'}), 500
 
+# Rename a channel
+@app.route("/api/rename_channel/<channel_name>/<channel_id>", methods=["PUT"])
+def rename_channel(channel_name, channel_id):
+    try:
+        query = "UPDATE channel SET channel_name = %s WHERE channel_id=%s"
+        dbSession.execute(query, (channel_name, uuid.UUID(channel_id)))
+        return jsonify({'message': 'Channel was renamed successfully', 'channel_id': str(channel_id)}), 201
+    except Exception as e:
+        print('Error:', e)
+        return jsonify({'message': 'Server error occurred during channel renaming'}), 500
+    
+
+# Delete a channel (and its messages)
+@app.route("/api/delete_channel/<channel_id>", methods=["DELETE"])
+def delete_channel(channel_id):
+    try:
+        # Convert the URL parameter to a UUID
+        channel_uuid = uuid.UUID(channel_id)
+
+        # First delete all messages from that channel in the message table
+        query = "SELECT message_id FROM message WHERE channel_id = %s ALLOW FILTERING"
+        rows = dbSession.execute(query, (channel_uuid,))
+
+        for row in rows:
+            message_id = row.message_id
+            delete_query = "DELETE FROM message WHERE message_id = %s"
+            dbSession.execute(delete_query, (message_id,))
+
+        # Then delete the channel itself.
+        query_channel = "DELETE FROM channel WHERE channel_id = %s"
+        dbSession.execute(query_channel, (channel_uuid,))
+
+        return jsonify({'message': 'Channel was deleted successfully'}), 201
+    except Exception as e:
+        print('Error:', e)
+        return jsonify({'message': 'Server error occurred during channel deletion'}), 500
+
 
 
 #------------------------MESSAGES--------------------------------  

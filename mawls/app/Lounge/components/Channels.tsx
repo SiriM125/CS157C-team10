@@ -4,6 +4,7 @@ import {
   PlusIcon,
   Component1Icon,
   ChevronRightIcon,
+  GearIcon
 } from "@radix-ui/react-icons";
 import {
   Dialog,
@@ -80,8 +81,85 @@ export default function Channels({selectedLounge, selectChannel, selectedChannel
 
   const [channelName, setChannelName] = useState("");
   const [createChannel, setCreateChannel] = useState(false);
+
+  const [showChoiceDialog, setShowChoiceDialog] = useState(false);
+  const [selectedChannelState, setSelectedChannelState] = useState<Channel | null>(null);
+
+  const [showRenameDialog, setShowRenameDialog] = useState(false);
+  const [renameChannel, setRenameChannel] = useState(false);
+
+  const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
+
+  const [newChannelName, setNewChannelName] = useState("");
+
   const { toast } = useToast();
 
+  const openDialog = (channel: Channel) => {
+    setSelectedChannelState(channel);
+    setShowChoiceDialog(true);
+  };
+
+  const closeDialog = () => {
+    setShowChoiceDialog(false);
+    setSelectedChannelState(null);
+    setNewChannelName("");
+  };
+
+  const handleRename = () => {
+    if (selectedChannelState) {
+      setShowChoiceDialog(false);
+      setShowRenameDialog(true);
+    }
+  };
+
+  const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
+    setNewChannelName(e.target.value);
+  };
+
+  const handleDelete = () => {
+    if (selectedChannelState) {
+      setShowChoiceDialog(false);
+      setShowDeleteConfirmation(true);
+    }
+  };
+
+  const handleSubmit = async () => {
+    if (!selectedChannelState || !newChannelName.trim()) return;
+
+    try {
+      const res = await fetch(
+        `/api/rename_channel/${selectedChannelState.channel_id}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ newChannelName }),
+        }
+      );
+
+      if (res.ok) {
+        // Update channel name locally
+        const updatedChannel = { ...selectedChannelState, channel_name: newChannelName };
+        setChannels(channels.map((channel) => (channel.channel_id === updatedChannel.channel_id ? updatedChannel : channel)));
+        toast({
+          title: "Success!",
+          description: "Channel renamed successfully.",
+        });
+        setShowChoiceDialog(false);
+        setNewChannelName("");
+      } else {
+        throw new Error("Failed to rename channel");
+      }
+    } catch (error) {
+      console.error("Error renaming channel:", error);
+      toast({
+        title: "Error!",
+        description: "Failed to rename channel.",
+      });
+    }
+  };
+  
 
   useEffect(() => {
     //Fetch username
@@ -124,6 +202,7 @@ export default function Channels({selectedLounge, selectChannel, selectedChannel
 
   const back = () => {
     setCreateChannel(false);
+    //setRenameChannel(false);
   };
 
   const submitCreate = async () => {
@@ -161,6 +240,87 @@ export default function Channels({selectedLounge, selectChannel, selectedChannel
     }
   };
 
+  const submitRename = async () => {
+    try {
+      if (!selectedChannelState || !newChannelName.trim()) {
+        throw new Error("Invalid input.");
+      }
+  
+      const res = await fetch(`/api/rename_channel/${newChannelName}/${selectedChannelState.channel_id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+      
+      if (res.ok) {
+        const updatedChannel = { ...selectedChannelState, channel_name: newChannelName };
+        setChannels((prevChannels) =>
+          prevChannels.map((channel) =>
+            channel.channel_id === updatedChannel.channel_id ? updatedChannel : channel
+          )
+        );
+        setNewChannelName("");
+        toast({
+          title: "Success!",
+          description: "Channel renamed successfully.",
+        });
+        setCreateChannel(false);
+        setShowRenameDialog(false);
+        
+      } else {
+        toast({
+          title: "Uh oh! Something went wrong.",
+          description: "Error occurred renaming channel.",
+        });
+      }
+    } catch (err) {
+      toast({
+        title: "Uh oh! Something went wrong.",
+        description: "Error occurred renaming channel.",
+      });
+    }
+  };
+
+  const confirmDelete = async () => {
+    try {
+      if (!selectedChannelState) return;
+
+      const res = await fetch(
+        `/api/delete_channel/${selectedChannelState.channel_id}`,
+        {
+          method: "DELETE",
+        }
+      );
+
+      if (res.ok) {
+        // Filter out the deleted channel from the channels list
+        setChannels((prevChannels) =>
+          prevChannels.filter(
+            (channel) => channel.channel_id !== selectedChannelState.channel_id
+          )
+        );
+        setSelectedChannelState(null)
+
+        toast({
+          title: "Success!",
+          description: "Channel deleted successfully.",
+        });
+        setShowChoiceDialog(false);
+        setShowDeleteConfirmation(false);
+      } else {
+        throw new Error("Failed to delete channel");
+      }
+    } catch (error) {
+      console.error("Error deleting channel:", error);
+      toast({
+        title: "Error!",
+        description: "Failed to delete channel.",
+      });
+    }
+  };
+
+
   return (
     <div className="fixed w-60 h-screen left-0 m-0 ml-16 bg-zinc-200 overflow-hidden">
       <div className="flex items-center justify-center h-14 m-0 p-0 bg-zinc-200 border-b border-zinc-300">
@@ -175,6 +335,7 @@ export default function Channels({selectedLounge, selectChannel, selectedChannel
             channel={channel}
             selectChannel={selectChannel}
             selectedChannel={selectedChannel}
+            onGearIconClick={() => openDialog(channel)}
           />
         ))}
 
@@ -210,7 +371,7 @@ export default function Channels({selectedLounge, selectChannel, selectedChannel
             />
             <DialogFooter className="sm:justify-between">
               <Button
-                onClick={() => setCreateChannel(false)}
+                onClick={back}
                 className="bg-zinc-100 text-zinc-600 hover:bg-slate-200"
               >
                 Back
@@ -229,6 +390,91 @@ export default function Channels({selectedLounge, selectChannel, selectedChannel
         </Dialog>
       )}
 
+      {/* Popup dialog */}
+      <Dialog open={showChoiceDialog} onOpenChange={setShowChoiceDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Channel Options: {selectedChannelState?.channel_name}</DialogTitle>
+          </DialogHeader>
+          <DialogFooter>
+            <Button className="block w-full text-center px-2 py-1 text-blue-500 hover:bg-blue-500 hover:text-white" onClick={handleRename}>Rename</Button>
+            <Button className="block w-full text-center px-2 py-1 text-red-500 hover:bg-red-500 hover:text-white" onClick={handleDelete}>Delete</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Rename dialog */}
+      <Dialog open={showRenameDialog} onOpenChange={setShowRenameDialog}>
+        <DialogContent>
+          <DialogHeader className="text-zinc-800 items-center justify-center">
+            <DialogTitle className="text-2xl">Rename Your Channel</DialogTitle>
+            <DialogDescription className="text-center">
+              Give your channel a new name.
+            </DialogDescription>
+          </DialogHeader>
+          <Label className="text-lg p-0">New Channel Name</Label>
+          <Input
+            id="newChannelName"
+            type="text"
+            placeholder="New Channel Name"
+            onChange={handleChange}
+            value={newChannelName}
+          />
+          <DialogFooter className="sm:justify-between">
+            <Button
+              onClick={() => {
+                setShowRenameDialog(false);
+                setSelectedChannelState(null);
+                setNewChannelName("");
+              }}
+              className="bg-zinc-100 text-zinc-600 hover:bg-slate-200"
+            >
+              Cancel
+            </Button>
+            <DialogClose asChild>
+              <Button
+                onClick={submitRename}
+                type="submit"
+                className="bg-blue-500 text-zinc-100 hover:bg-blue-700 px-9"
+              >
+                Rename
+              </Button>
+            </DialogClose>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete confirmation dialog */}
+      <Dialog
+        open={showDeleteConfirmation}
+        onOpenChange={setShowDeleteConfirmation}
+      >
+        <DialogContent>
+          <DialogHeader className="text-zinc-800 items-center justify-center">
+            <DialogTitle className="text-2xl">
+              Are you sure you want to delete this channel?
+            </DialogTitle>
+          </DialogHeader>
+          <DialogFooter className="sm:justify-between">
+            <Button
+              onClick={() => setShowDeleteConfirmation(false)}
+              className="bg-zinc-100 text-zinc-600 hover:bg-slate-200"
+            >
+              Cancel
+            </Button>
+            <DialogClose asChild>
+              <Button
+                onClick={confirmDelete}
+                type="button"
+                className="bg-red-500 text-zinc-100 hover:bg-red-700 px-9"
+              >
+                Delete
+              </Button>
+            </DialogClose>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       <div className="fixed bottom-0 w-60 h-12 m-0 p-0 pt-1 px-1 bg-zinc-300 border-t border-zinc-400">
         <UserInfo user={username} />
       </div>
@@ -240,24 +486,39 @@ const ChannelTab = ({
   channel,
   selectChannel,
   selectedChannel,
-}: ChannelTabProps) => {
+  onGearIconClick,
+}: ChannelTabProps & { onGearIconClick: () => void }) => {
   const toggleSelection = () => {
     if (!selectedChannel || selectedChannel.channel_id !== channel.channel_id) {
       selectChannel(channel);
     } else {
-      // change to null if you want to deselect to no channel
       selectChannel(null);
     }
   };
 
   return (
-    <div
-      onClick={toggleSelection}
-      className="flex flex-row items-center justify-evenly mt-1 mr-auto ml-2 transition duration-300 ease-in-out"
-    >
-      <Component1Icon scale={24} className="text-zinc-400" />
-      <div className="text-zinc-500 font-semibold tracking-wider mr-auto transition duration-300 ease-in-out cursor-pointer hover:text-blue-400 unselectable">
-        {channel.channel_name}
+    <div className="flex flex-row items-center justify-between w-full mt-1 mr-4 ml-4 transition duration-300 ease-in-out">
+      <div
+        className="flex flex-row items-center cursor-pointer"
+        onClick={toggleSelection}
+      >
+        <Component1Icon scale={24} className="text-zinc-400" />
+        <div
+          className={`font-semibold tracking-wider ml-2 transition duration-300 ease-in-out unselectable ${
+            selectedChannel && selectedChannel.channel_id === channel.channel_id
+              ? "text-blue-500"
+              : "text-zinc-500 hover:text-blue-500"
+          }`}
+        >
+          {channel.channel_name}
+        </div>
+      </div>
+      <div className="ml-auto">
+        <GearIcon
+          scale={24}
+          className="text-zinc-400 cursor-pointer"
+          onClick={onGearIconClick}
+        />
       </div>
     </div>
   );
