@@ -278,7 +278,6 @@ export default function ChannelContent({ selectedLounge, selectedChannel }: Prop
   
         if (response.ok) {
           setPopupVisible(false);  // Close the popup after deletion
-          // setMessages(prevMessages => prevMessages.filter(msg => msg.message_id !== selectedMessage?.message_id));
           setConfirmationVisible(false)
           console.log('Message deleted!');
           toast({

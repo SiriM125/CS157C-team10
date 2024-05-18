@@ -370,17 +370,17 @@ def lounges_channels(lounge_id):
         print('Error:', e)
         return jsonify({'message': 'Server error occurred while retrieving channels'}), 500
 
-# # Create new channel
-# @app.route("/api/create_channel/<channel_name>/<channel_name/lounge_id>" )
-# def create_channel(channel_name, lounge_id):
-#     try:
-#         channel_id = uuid.uuid4()
-#         query = "INSERT INTO channel (channel_id, channel_name, lounge_id) VALUES (%s, %s, %s)"
-#         dbSession.execute(query, (channel_id, channel_name, uuid.UUID(lounge_id)))
-#         return jsonify({'message': 'Channel was created successfully', 'channel_id': str(channel_id)}), 201
-#     except Exception as e:
-#         print('Error:', e)
-#         return jsonify({'message': 'Server error occurred during channel creation'}), 500
+# Create new channel
+@app.route("/api/create_channel/<channel_name>/<lounge_id>", methods=["POST"])
+def create_channel(channel_name, lounge_id):
+    try:
+        channel_id = uuid.uuid4()
+        query = "INSERT INTO channel (channel_id, channel_name, lounge_id) VALUES (%s, %s, %s)"
+        dbSession.execute(query, (channel_id, channel_name, uuid.UUID(lounge_id)))
+        return jsonify({'message': 'Channel was created successfully', 'channel_id': str(channel_id)}), 201
+    except Exception as e:
+        print('Error:', e)
+        return jsonify({'message': 'Server error occurred during channel creation'}), 500
 
 
 
