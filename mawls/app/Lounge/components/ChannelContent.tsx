@@ -44,6 +44,7 @@ export default function ChannelContent({ selectedLounge, selectedChannel }: Prop
   const [editPopupPosition, setEditPopupPosition] = useState<{ x: number, y: number } | null>(null);
   const [editMessageContent, setEditMessageContent] = useState<string>('');
 
+  const [initialLoad, setInitialLoad] = useState<boolean>(true);
 
   const socket = useRef<Socket>();
   const lastMessageRef = useRef<HTMLDivElement>(null);
@@ -116,11 +117,13 @@ export default function ChannelContent({ selectedLounge, selectedChannel }: Prop
             sender_id: senderId,
             message_id: messageId
           };
-          socket.current.emit("message", newMessage);
+          // socket.current.emit("message", newMessage);
+          // setMessages(prevMessages => [...prevMessages, newMessage]);
+          setInitialLoad(true);
         }
 
         setMessage('');
-        console.error('Message sent!')
+        console.log('Message sent!')
 
       } else {
         setMessage('');
@@ -232,11 +235,10 @@ export default function ChannelContent({ selectedLounge, selectedChannel }: Prop
           // Update the message in the state immediately
           setMessages(prevMessages =>
             prevMessages.map(msg =>
-              msg.message_id === updatedMessage.message_id ? updatedMessage : msg
+              msg.message_id === updatedMessage.message_id ? { ...updatedMessage } : msg
             )
           );
-          
-          
+          console.log("PASS AFTER SETMESSAGES")
           
           setEditPopupVisible(false);
           console.log('Message updated!');
@@ -292,10 +294,13 @@ export default function ChannelContent({ selectedLounge, selectedChannel }: Prop
   useEffect(() => {
     console.log("Selected lounge/channel changed. Clearing messages.");
     setMessages([]);
+    setInitialLoad(true); // Reset initialLoad when channel changes
   }, [selectedLounge, selectedChannel]);
 
   // Processes messages to be displayed
   useEffect(() => {
+    let intervalId: NodeJS.Timeout;
+
     const fetchMessages = async () => {
       if (!selectedChannel || !selectedChannel.channel_id) return; // If they are undefined... do nothing.
   
@@ -307,7 +312,6 @@ export default function ChannelContent({ selectedLounge, selectedChannel }: Prop
           
           // Fetch usernames for each sender_id, and adds it in.
           const updatedMessages = await Promise.all(data.messages.map(async (message : Message) => {
-            console.log("Message with timestamp:", message.message_timestamp); // Log timestamp of each message
             const username = await getUsername(message.sender_id);
             return { ...message, user: username || 'Unknown User' };
           }));
@@ -319,7 +323,12 @@ export default function ChannelContent({ selectedLounge, selectedChannel }: Prop
             return timestampA - timestampB;
           });
           
-          setMessages(updatedMessages); // Set the received messages with usernames
+          setMessages(prevMessages => {
+            // Check if there are new messages to determine if initial load is needed
+            const hasNewMessages = prevMessages.length === 0 || prevMessages.length < updatedMessages.length;
+            setInitialLoad(hasNewMessages);
+            return updatedMessages; // Set the received messages with usernames
+          });
         } else {
           throw new Error('Failed to fetch messages');
         }
@@ -328,8 +337,18 @@ export default function ChannelContent({ selectedLounge, selectedChannel }: Prop
       }
     };
   
-    fetchMessages();
-    
+    const startFetchingMessages = () => {
+      fetchMessages(); // Fetch messages immediately on component mount
+      intervalId = setInterval(fetchMessages, 1500); // Fetch messages every 1.5 seconds
+    };
+  
+    if (selectedChannel && selectedChannel.channel_id) {
+      startFetchingMessages();
+    }
+  
+    return () => {
+      clearInterval(intervalId); // Clear interval when component unmounts or channel changes
+    };
   }, [selectedChannel, selectedLounge]); // Dependency array
   
 
@@ -349,10 +368,13 @@ export default function ChannelContent({ selectedLounge, selectedChannel }: Prop
   }
   //Scroll to bottom
   useEffect(() => {
-    if (lastMessageRef.current) {
-      lastMessageRef.current.scrollIntoView({ behavior: 'smooth' });
+    if (initialLoad || messages.length === 1) {
+      // Scroll to bottom only on initial load or when a new message is added
+      if (lastMessageRef.current) {
+        lastMessageRef.current.scrollIntoView({ behavior: 'smooth' });
+      }
     }
-  }, [messages]);
+  }, [messages, initialLoad]);
   
 
   return (
@@ -363,19 +385,21 @@ export default function ChannelContent({ selectedLounge, selectedChannel }: Prop
         <div className="flex flex-row h-full px-3">
 
           {/* Message display area here! */}
-          <ScrollArea className="flex-grow w-full">
-            {messages.map((message, index) => (
-              <div ref={index === messages.length - 1 ? lastMessageRef : null} key={index}>
-                <Message
-                  content={message.content}
-                  message_timestamp={message.message_timestamp}
-                  user={message.user}
-                  sender_id={message.sender_id}
-                  message_id={message.message_id}
-                />
-              </div>
-            ))}
-          </ScrollArea>
+          {selectedChannel && (
+            <ScrollArea className="flex-grow w-full">
+              {messages.map((message, index) => (
+                <div ref={index === messages.length - 1 ? lastMessageRef : null} key={index}>
+                  <Message
+                    content={message.content}
+                    message_timestamp={message.message_timestamp}
+                    user={message.user}
+                    sender_id={message.sender_id}
+                    message_id={message.message_id}
+                  />
+                </div>
+              ))}
+            </ScrollArea>
+          )}
         </div>
       </div>
 
