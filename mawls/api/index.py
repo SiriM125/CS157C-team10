@@ -442,24 +442,74 @@ def get_messages(channel_id):
         return jsonify({'message': 'Server error occurred while retrieving messages'}), 500
 
 # Edit Message
-@app.route("/api/edit_message/<message_id>/<user_id>/<new_content>", methods=['PUT'])
+@app.route("/api/edit_message/<message_id>/<user_id>/<path:new_content>", methods=['PUT'])
 def edit_message(message_id, user_id, new_content):
     try:
-        query = "SELECT * FROM message WHERE message_id = %s ALLOW FILTERING"
-        result = dbSession.execute(query, (uuid.UUID(message_id),)).one()
-        if not result:
+        if not new_content:
+            return jsonify({'message': 'New content is required'}), 400
+
+        # Check if the message exists
+        query = "SELECT * FROM message WHERE message_id = %s"
+        result = dbSession.execute(query, (uuid.UUID(message_id),))
+        
+        # Extract the first row, if any
+        row = None
+        for r in result:
+            row = r
+            break
+
+        if not row:
             return jsonify({'message': 'Message not found'}), 404
 
-        if result.sender_id != uuid.UUID(user_id):
+        # Check if the user is authorized to edit this message
+        if str(row.sender_id) != user_id:
             return jsonify({'message': 'You cannot edit this message'}), 403
-        
+
+        # Update the message content
         update_query = "UPDATE message SET content = %s WHERE message_id = %s"
         dbSession.execute(update_query, (new_content, uuid.UUID(message_id)))
 
-        return jsonify({'message': 'Message edited successfully'}), 200
+        # Fetch the updated message
+        updated_message_query = "SELECT * FROM message WHERE message_id = %s"
+        updated_message = dbSession.execute(updated_message_query, (uuid.UUID(message_id),))
+        
+        message = []
+        for row in updated_message:
+            message.append({
+                'message_id': str(row.message_id),
+                'channel_id': str(row.channel_id),
+                'sender_id': str(row.sender_id),
+                'content': row.content,
+                'message_timestamp': row.message_timestamp.strftime("%Y-%m-%d %H:%M:%S")
+            })
+
+        return jsonify({
+            'message': 'Message edited successfully',
+            'updated_message': message
+        }), 200
+
     except Exception as e:
         print('Error:', e)
         return jsonify({'message': 'Server error occurred during message editing'}), 500
+    
+# @app.route("/api/edit_message/<message_id>/<user_id>/<new_content>", methods=['PUT'])
+# def edit_message(message_id, user_id, new_content):
+#     try:
+#         query = "SELECT * FROM message WHERE message_id = %s ALLOW FILTERING"
+#         result = dbSession.execute(query, (uuid.UUID(message_id),)).one()
+#         if not result:
+#             return jsonify({'message': 'Message not found'}), 404
+
+#         if result.sender_id != uuid.UUID(user_id):
+#             return jsonify({'message': 'You cannot edit this message'}), 403
+        
+#         update_query = "UPDATE message SET content = %s WHERE message_id = %s"
+#         dbSession.execute(update_query, (new_content, uuid.UUID(message_id)))
+
+#         return jsonify({'message': 'Message edited successfully'}), 200
+#     except Exception as e:
+#         print('Error:', e)
+#         return jsonify({'message': 'Server error occurred during message editing'}), 500
 # - - - Database creation/class stuff below - - -
 
 class User(db.Model):

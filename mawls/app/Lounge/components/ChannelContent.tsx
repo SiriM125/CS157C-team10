@@ -4,12 +4,16 @@ import { PlusIcon } from "@radix-ui/react-icons";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import io from 'socket.io-client';
 import { Socket } from 'socket.io-client';
+import { Toaster } from "@/components/ui/toaster";
+import { useToast } from "@/components/ui/use-toast";
+
 
 interface Message {
   content: string;
   message_timestamp: string;
   user: string;
   sender_id: string;
+  message_id: string;
 }
 
 interface Lounge {
@@ -30,11 +34,17 @@ interface Props {
 export default function ChannelContent({ selectedLounge, selectedChannel }: Props) {
   const [message, setMessage] = useState<string>('');
   const [messages, setMessages] = useState<Message[]>([]);
+  const [currentUserId, setCurrentUserId] = useState<string>('');
 
   const [popupVisible, setPopupVisible] = useState<boolean>(false);
   const [popupPosition, setPopupPosition] = useState<{ x: number, y: number } | null>(null);
   const [selectedMessage, setSelectedMessage] = useState<Message | null>(null);
   
+  const [editPopupVisible, setEditPopupVisible] = useState<boolean>(false);
+  const [editPopupPosition, setEditPopupPosition] = useState<{ x: number, y: number } | null>(null);
+  const [editMessageContent, setEditMessageContent] = useState<string>('');
+
+
   const socket = useRef<Socket>();
   const lastMessageRef = useRef<HTMLDivElement>(null);
   const popupRef = useRef<HTMLDivElement>(null);
@@ -79,17 +89,6 @@ export default function ChannelContent({ selectedLounge, selectedChannel }: Prop
         //emit message via websocket
         const now = new Date();
         const formattedTimestamp = `${now.getFullYear()}-${(now.getMonth() + 1).toString().padStart(2, '0')}-${now.getDate().toString().padStart(2, '0')} ${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}:${now.getSeconds().toString().padStart(2, '0')}`;
-        
-        if (socket.current) {
-          const newMessage: Message = {
-            content: message,
-            message_timestamp: formattedTimestamp, //new Date().toISOString().split('.')[0],
-            user: username,
-            sender_id: senderId
-          };
-          socket.current.emit("message", newMessage);
-        }
-
 
       if (!usernameResponse.ok) {
         throw new Error("Failed to get username");
@@ -104,8 +103,24 @@ export default function ChannelContent({ selectedLounge, selectedChannel }: Prop
       });
       
       if (response.ok) {
+
+        const responseData = await response.json();
+        const messageId = responseData.message_id;
+        
+        // Display the message in real-time
+        if (socket.current) {
+          const newMessage: Message = {
+            content: message,
+            message_timestamp: formattedTimestamp,
+            user: username,
+            sender_id: senderId,
+            message_id: messageId
+          };
+          socket.current.emit("message", newMessage);
+        }
+
         setMessage('');
-        console.error('Message sent!');
+        console.error('Message sent!')
 
       } else {
         setMessage('');
@@ -119,6 +134,24 @@ export default function ChannelContent({ selectedLounge, selectedChannel }: Prop
   
 };
 
+  // Editing and deletions
+  useEffect(() => {
+    // Fetch the current user ID when the component mounts
+    const fetchCurrentUserId = async () => {
+      try {
+        const response = await fetch("/api/user_id");
+        if (response.ok) {
+          const userData = await response.json();
+          setCurrentUserId(userData.user_id);
+        } else {
+          throw new Error("Failed to get user ID");
+        }
+      } catch (error) {
+        console.error('Error fetching current user ID:', error);
+      }
+    };
+    fetchCurrentUserId();
+  }, []);
 
   const onChangeMessage = (e: ChangeEvent<HTMLInputElement>) => {
     e.preventDefault();
@@ -126,20 +159,22 @@ export default function ChannelContent({ selectedLounge, selectedChannel }: Prop
   };
 
   const handleEditClick = () => {
-    // Handle edit button click
-    console.log('Edit');
-    setPopupVisible(false); // Hide the popup
-  };
+    if (selectedMessage) {
+      setEditMessageContent(selectedMessage.content);
+      setPopupVisible(false); //Hides the choice popup
+      setEditPopupVisible(true); //Displayes the edit popup
+    }
+};
 
   const handleDeleteClick = () => {
-    // Handle delete button click
     console.log('Delete');
     setPopupVisible(false); // Hide the popup
   };
 
   const handlePopupOutsideClick = (e: MouseEvent) => {
     if (popupRef.current && !popupRef.current.contains(e.target as Node)) {
-      setPopupVisible(false); // Close popup if clicked outside
+      setPopupVisible(false); // Close both popups if clicked outside
+      setEditPopupVisible(false);
     }
   };
 
@@ -150,14 +185,81 @@ export default function ChannelContent({ selectedLounge, selectedChannel }: Prop
     };
   }, []);
 
+  // Only the OWNER or SENDER of the message can see the popup. 
   const handleMessageClick = (e: React.MouseEvent<HTMLDivElement>, message: Message) => {
-    setSelectedMessage(message);
-    setPopupPosition({ x: e.clientX, y: e.clientY });
-    setPopupVisible(true);
+    if (message.sender_id === currentUserId) {
+      setSelectedMessage(message);
+      setPopupPosition({ x: e.clientX, y: e.clientY });
+      setEditPopupPosition({ x: e.clientX, y: e.clientY });
+      setPopupVisible(true);
+    }
   };
 
+  // The actual edit prompt 
+  const handleEditPopupOutsideClick = (e: MouseEvent) => {
+    if (popupRef.current && !popupRef.current.contains(e.target as Node)) {
+      setEditPopupVisible(false); // Close popup if clicked outside
+    }
+  };
   
-  function Message({ content, message_timestamp: timestamp, user , sender_id}: Message) {
+  useEffect(() => {
+    document.addEventListener("mousedown", handleEditPopupOutsideClick);
+    return () => {
+      document.removeEventListener("mousedown", handleEditPopupOutsideClick);
+    };
+  }, []);
+  
+  const handleEditMessageChange = (e: ChangeEvent<HTMLInputElement>) => {
+    setEditMessageContent(e.target.value);
+  };
+
+  const { toast } = useToast();
+  
+  const handleEditMessageSubmit = async () => {
+    if (selectedMessage && editMessageContent.trim() !== '') {
+      try {
+        const response = await fetch(`/api/edit_message/${selectedMessage.message_id}/${currentUserId}/${encodeURIComponent(editMessageContent)}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        });
+  
+        if (response.ok) {
+          const responseData = await response.json();
+          const updatedMessage = responseData.updated_message;
+  
+          // Update the message in the state immediately
+          setMessages(prevMessages =>
+            prevMessages.map(msg =>
+              msg.message_id === updatedMessage.message_id ? updatedMessage : msg
+            )
+          );
+          
+          
+          
+          setEditPopupVisible(false);
+          console.log('Message updated!');
+        } else {
+          toast({
+            title: "Message editing error!",
+            description: "Response from backend NOT ok",
+          });
+          console.error("Error updating message.");
+        }
+      } catch (error) {
+        toast({
+          title: "Message editing error!",
+          description: "Response from frontend NOT ok",
+        });
+        console.error('Error updating message:', error);
+      }
+    }
+  };  
+  
+  
+  
+  function Message({ content, message_timestamp: timestamp, user , sender_id, message_id}: Message) {
     const abbreviatedUser = user ? user
     .split(' ')
     .map((word) => word.charAt(0))
@@ -165,7 +267,7 @@ export default function ChannelContent({ selectedLounge, selectedChannel }: Prop
 
     return (
       <div className="w-full flex flex-row items-center py-4 px-8 m-0 hover:bg-zinc-200"
-      onClick={(e) => handleMessageClick(e, { content, message_timestamp: timestamp, user, sender_id})}
+      onClick={(e) => handleMessageClick(e, { content, message_timestamp: timestamp, user, sender_id, message_id})}
       >
         <div className="relative flex items-center justify-center rounded-3xl bg-blue-500 text-white h-12 w-12 unselectable">
           {abbreviatedUser}
@@ -189,10 +291,10 @@ export default function ChannelContent({ selectedLounge, selectedChannel }: Prop
   // Clear messages when selected lounge or channel changes
   useEffect(() => {
     console.log("Selected lounge/channel changed. Clearing messages.");
-    console.log("Selected lounge/channel changed. Clearing messages.");
     setMessages([]);
   }, [selectedLounge, selectedChannel]);
 
+  // Processes messages to be displayed
   useEffect(() => {
     const fetchMessages = async () => {
       if (!selectedChannel || !selectedChannel.channel_id) return; // If they are undefined... do nothing.
@@ -230,6 +332,7 @@ export default function ChannelContent({ selectedLounge, selectedChannel }: Prop
     
   }, [selectedChannel, selectedLounge]); // Dependency array
   
+
   async function getUsername(user_id: string): Promise<string | null> {
     try {
       const response = await fetch(`/api/get_msg_username/${user_id}`);
@@ -268,24 +371,14 @@ export default function ChannelContent({ selectedLounge, selectedChannel }: Prop
                   message_timestamp={message.message_timestamp}
                   user={message.user}
                   sender_id={message.sender_id}
+                  message_id={message.message_id}
                 />
               </div>
             ))}
           </ScrollArea>
         </div>
       </div>
-    
-      {/* Popup */}
-      {popupVisible && popupPosition && selectedMessage && (
-        <div
-          ref={popupRef}
-          className="absolute bg-white border border-gray-300 rounded shadow-md p-2"
-          style={{ top: popupPosition.y, left: popupPosition.x }}
-        >
-          <button className="block w-full text-left px-2 py-1 text-blue-500 hover:bg-gray-200 focus:bg-blue-500 focus:text-white rounded-md" onClick={handleEditClick}>Edit</button>
-          <button className="block w-full text-left px-2 py-1 text-red-500 hover:bg-gray-200 focus:bg-red-500 focus:text-white rounded-md" onClick={handleDeleteClick}>Delete</button>
-        </div>
-      )}
+
 
     <div className="px-3 fixed bottom-4 left-[304px] w-[calc(100%-304px)]">
       <div className="flex flex-row items-center justify-between w-full rounded-lg shadow-lg bg-zinc-300 px-4 h-12">
@@ -303,7 +396,42 @@ export default function ChannelContent({ selectedLounge, selectedChannel }: Prop
           />
         </div>
       </div>
+
+      {/* Popup for Edit/Delete options */}
+      {popupVisible && popupPosition && selectedMessage && (
+        <div
+          ref={popupRef}
+          className="absolute bg-white border border-gray-300 rounded shadow-md p-2"
+          style={{ top: popupPosition.y, left: popupPosition.x }}
+        >
+          <button className="block w-full text-left px-2 py-1 text-blue-500 hover:bg-gray-200 focus:bg-blue-500 focus:text-white rounded-md" onClick={handleEditClick}>Edit</button>
+          <button className="block w-full text-left px-2 py-1 text-red-500 hover:bg-gray-200 focus:bg-red-500 focus:text-white rounded-md" onClick={handleDeleteClick}>Delete</button>
+        </div>
+      )}
+  
+      {/* Edit Popup */}
+      {editPopupVisible && editPopupPosition && selectedMessage && (
+        <div
+          ref={popupRef}
+          className="absolute bg-white border border-gray-300 rounded shadow-md p-2"
+          style={{ top: editPopupPosition.y, left: editPopupPosition.x }}
+        >
+          <input
+            type="text"
+            value={editMessageContent}
+            onChange={(e) => setEditMessageContent(e.target.value)}
+            className="border p-1 w-full"
+          />
+          <button
+            className="block w-full text-center px-2 py-1 text-blue-500 hover:bg-gray-200 focus:bg-blue-500 focus:text-white rounded-md mt-2"
+            onClick={handleEditMessageSubmit}
+          >
+            Submit
+          </button>
+        </div>
+      )}
     </div>
+    
   );
 }
 
