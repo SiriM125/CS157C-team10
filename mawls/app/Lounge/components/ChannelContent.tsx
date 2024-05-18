@@ -44,11 +44,15 @@ export default function ChannelContent({ selectedLounge, selectedChannel }: Prop
   const [editPopupPosition, setEditPopupPosition] = useState<{ x: number, y: number } | null>(null);
   const [editMessageContent, setEditMessageContent] = useState<string>('');
 
+  const [confirmationVisible, setConfirmationVisible] = useState<boolean>(false); // State for confirmation popup
+
   const [initialLoad, setInitialLoad] = useState<boolean>(true);
 
   const socket = useRef<Socket>();
   const lastMessageRef = useRef<HTMLDivElement>(null);
   const popupRef = useRef<HTMLDivElement>(null);
+
+  const { toast } = useToast();
 
   useEffect(() => {
     if (!selectedChannel || !selectedChannel.channel_id) return;
@@ -170,8 +174,10 @@ export default function ChannelContent({ selectedLounge, selectedChannel }: Prop
 };
 
   const handleDeleteClick = () => {
-    console.log('Delete');
-    setPopupVisible(false); // Hide the popup
+    if (selectedMessage) {
+      setPopupVisible(false); // Hide the delete popup
+      setConfirmationVisible(true); // Show the confirmation popup
+    }
   };
 
   const handlePopupOutsideClick = (e: MouseEvent) => {
@@ -215,8 +221,6 @@ export default function ChannelContent({ selectedLounge, selectedChannel }: Prop
   const handleEditMessageChange = (e: ChangeEvent<HTMLInputElement>) => {
     setEditMessageContent(e.target.value);
   };
-
-  const { toast } = useToast();
   
   const handleEditMessageSubmit = async () => {
     if (selectedMessage && editMessageContent.trim() !== '') {
@@ -238,10 +242,12 @@ export default function ChannelContent({ selectedLounge, selectedChannel }: Prop
               msg.message_id === updatedMessage.message_id ? { ...updatedMessage } : msg
             )
           );
-          console.log("PASS AFTER SETMESSAGES")
           
           setEditPopupVisible(false);
           console.log('Message updated!');
+          toast({
+            title: "Message edited successfully!"
+          });
         } else {
           toast({
             title: "Message editing error!",
@@ -259,7 +265,45 @@ export default function ChannelContent({ selectedLounge, selectedChannel }: Prop
     }
   };  
   
+
+  const handleConfirmDelete = async () => {
+    if (selectedMessage) {
+      try {
+        const response = await fetch(`/api/delete_message/${selectedMessage.message_id}/${currentUserId}`, {
+          method: 'DELETE',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        });
   
+        if (response.ok) {
+          setPopupVisible(false);  // Close the popup after deletion
+          // setMessages(prevMessages => prevMessages.filter(msg => msg.message_id !== selectedMessage?.message_id));
+          setConfirmationVisible(false)
+          console.log('Message deleted!');
+          toast({
+            title: "Message deleted successfully!"
+          });
+        } else {
+          console.error("Error deleting message.");
+          toast({
+            title: "Message deletion error!",
+            description: "Response from backend NOT ok",
+          });
+        }
+      } catch (error) {
+        console.error('Error deleting message:', error);
+        toast({
+          title: "Message deletion error!",
+          description: "Response from frontend NOT ok",
+        });
+      }
+    }
+  };
+
+  const handleCancelDelete = () => {
+    setConfirmationVisible(false); // Hide the confirmation popup
+  };
   
   function Message({ content, message_timestamp: timestamp, user , sender_id, message_id}: Message) {
     const abbreviatedUser = user ? user
@@ -325,7 +369,7 @@ export default function ChannelContent({ selectedLounge, selectedChannel }: Prop
           
           setMessages(prevMessages => {
             // Check if there are new messages to determine if initial load is needed
-            const hasNewMessages = prevMessages.length === 0 || prevMessages.length < updatedMessages.length;
+            const hasNewMessages = prevMessages.length === 0 || prevMessages.length != updatedMessages.length;
             setInitialLoad(hasNewMessages);
             return updatedMessages; // Set the received messages with usernames
           });
@@ -454,6 +498,20 @@ export default function ChannelContent({ selectedLounge, selectedChannel }: Prop
           </button>
         </div>
       )}
+
+      {/* Confirmation Popup */}
+      {confirmationVisible && (
+        <div
+          ref={popupRef}
+          className="absolute text-center bg-white border border-gray-300 rounded shadow-md p-2"
+          style={{ top: popupPosition?.y, left: popupPosition?.x }}
+        >
+          <p>Are you sure you want to delete this message?</p>
+          <button className="block w-full text-center px-2 py-1 text-blue-500 hover:bg-gray-200 focus:bg-blue-500 focus:text-white rounded-md mt-2" onClick={handleConfirmDelete}>Yes</button>
+          <button className="block w-full text-center px-2 py-1 text-red-500 hover:bg-gray-200 focus:bg-red-500 focus:text-white rounded-md mt-2" onClick={handleCancelDelete}>No</button>
+        </div>
+      )}
+
     </div>
     
   );

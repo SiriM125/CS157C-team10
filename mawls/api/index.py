@@ -492,6 +492,37 @@ def edit_message(message_id, user_id, new_content):
         print('Error:', e)
         return jsonify({'message': 'Server error occurred during message editing'}), 500
     
+@app.route("/api/delete_message/<message_id>/<user_id>",  methods=['DELETE'])
+def delete_message(message_id, user_id):
+    try: 
+        # Check if the message exists
+        query = "SELECT * FROM message WHERE message_id = %s"
+        result = dbSession.execute(query, (uuid.UUID(message_id),))
+        
+        # Extract the first row, if any
+        row = None
+        for r in result:
+            row = r
+            break
+
+        if not row:
+            return jsonify({'message': 'Message not found'}), 404
+
+        # Check if the user is authorized to delete this message
+        if str(row.sender_id) != user_id:
+            return jsonify({'message': 'You cannot delete this message'}), 403
+
+        query = "DELETE FROM message WHERE message_id = %s"
+        dbSession.execute(query, (uuid.UUID(message_id),))
+
+        return jsonify({
+            'message': 'Message deleted successfully'
+        }), 200
+
+    except Exception as e: 
+        print('Error:', e)
+        return jsonify({'message': 'Server error occurred during message editing'}), 500
+
 # @app.route("/api/edit_message/<message_id>/<user_id>/<new_content>", methods=['PUT'])
 # def edit_message(message_id, user_id, new_content):
 #     try:
