@@ -180,7 +180,7 @@ export default function ChannelContent({ selectedLounge, selectedChannel }: Prop
     }
   };
 
-  const handlePopupOutsideClick = (e: MouseEvent) => {
+  const handleConfirmPopupOutsideClick = (e: MouseEvent) => {
     if (popupRef.current && !popupRef.current.contains(e.target as Node)) {
       setPopupVisible(false); // Close both popups if clicked outside
       setEditPopupVisible(false);
@@ -188,9 +188,9 @@ export default function ChannelContent({ selectedLounge, selectedChannel }: Prop
   };
 
   useEffect(() => {
-    document.addEventListener("mousedown", handlePopupOutsideClick);
+    document.addEventListener("mousedown", handleConfirmPopupOutsideClick);
     return () => {
-      document.removeEventListener("mousedown", handlePopupOutsideClick);
+      document.removeEventListener("mousedown", handleConfirmPopupOutsideClick);
     };
   }, []);
 
@@ -246,7 +246,7 @@ export default function ChannelContent({ selectedLounge, selectedChannel }: Prop
           setEditPopupVisible(false);
           console.log('Message updated!');
           toast({
-            title: "Message edited successfully!"
+            description: "Message edited successfully."
           });
         } else {
           toast({
@@ -282,7 +282,7 @@ export default function ChannelContent({ selectedLounge, selectedChannel }: Prop
           setConfirmationVisible(false)
           console.log('Message deleted!');
           toast({
-            title: "Message deleted successfully!"
+            description: "Message deleted successfully."
           });
         } else {
           console.error("Error deleting message.");
@@ -305,6 +305,22 @@ export default function ChannelContent({ selectedLounge, selectedChannel }: Prop
     setConfirmationVisible(false); // Hide the confirmation popup
   };
   
+  // Event handler for clicks outside the confirmation popup
+  const handlePopupOutsideClick = (e: MouseEvent) => {
+    if (popupRef.current && !popupRef.current.contains(e.target as Node)) {
+      setConfirmationVisible(false); // Hide the confirmation popup
+    }
+  };
+
+  // Add event listener for clicks outside the confirmation popup
+  useEffect(() => {
+    document.addEventListener("mousedown", handlePopupOutsideClick);
+    return () => {
+      document.removeEventListener("mousedown", handlePopupOutsideClick);
+    };
+  }, []);
+
+
   function Message({ content, message_timestamp: timestamp, user , sender_id, message_id}: Message) {
     const abbreviatedUser = user ? user
     .split(' ')
