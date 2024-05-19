@@ -209,6 +209,54 @@ def get_msg_username(user_id):
         print('Error:', e)
         return jsonify({'message': 'Server error occurred while retrieving username given a user_id'}), 500
 
+
+# Update username
+@app.route("/api/change_username/<user_id>/<new_username>", methods=['PUT'])
+def change_username(user_id, new_username):
+    try:
+        if not new_username:
+            return jsonify({'message': 'Enter new username'}), 400
+
+        update_query = "UPDATE user SET username = %s WHERE user_id = %s"
+        dbSession.execute(update_query, (new_username, uuid.UUID(user_id)))
+
+        return jsonify({'message': 'Username changed successfully!'}), 200
+    
+    except Exception as e:
+        print('Error:', e)
+        return jsonify({'message': 'Server error occurred during username change'}), 500
+
+# Update password
+@app.route("/api/change_password/<user_id>/<new_password>", methods=['PUT'])
+def change_password(user_id, new_password):
+    try:
+        if not new_password:
+            return jsonify({'message': 'Enter new password'}), 400
+
+        update_query = "UPDATE user SET password = %s WHERE user_id = %s"
+        dbSession.execute(update_query, (new_password, uuid.UUID(user_id)))
+        return jsonify({'message': 'Password changed successfully!'}), 200
+    
+    except Exception as e:
+        print('Error:', e)
+        return jsonify({'message': 'Server error occurred during password change'}), 500
+
+
+# Update email
+@app.route("/api/change_email/<user_id>/<new_email>", methods=['PUT'])
+def change_email(user_id, new_email):
+    try:
+        if not new_email:
+            return jsonify({'message': 'Enter new email'}), 400
+        update_query = "UPDATE user SET email = %s WHERE user_id = %s"
+        dbSession.execute(update_query, (new_email, uuid.UUID(user_id)))
+
+        return jsonify({'message': 'Email changed successfully!'}), 200
+    
+    except Exception as e:
+        print('Error:', e)
+        return jsonify({'message': 'Server error occurred during email change'}), 500
+
     
 #------------------------LOUNGES-------------------------------- 
     

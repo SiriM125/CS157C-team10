@@ -90,18 +90,31 @@ export default function NavbarContent({selectedLounge, selectedChannel}: Props) 
             {username}'s Account
           </DropdownMenuLabel>
           <DropdownMenuSeparator />
+          <Link href="/profile" passHref>
           <DropdownMenuItem>
             Profile
             <DropdownMenuShortcut>
               <PersonIcon />
             </DropdownMenuShortcut>
           </DropdownMenuItem>
-          <DropdownMenuItem>
+          </Link>
+          {/* <DropdownMenuItem>
+            <Link href="/profile" passHref>
+              <div className="flex items-center">
+                Profile
+                <DropdownMenuShortcut>
+                  <PersonIcon />
+                </DropdownMenuShortcut>
+              </div>
+            </Link>
+          </DropdownMenuItem> */}
+
+          {/* <DropdownMenuItem>
             Settings
             <DropdownMenuShortcut>
               <GearIcon />
             </DropdownMenuShortcut>
-          </DropdownMenuItem>
+          </DropdownMenuItem> */}
           <DropdownMenuSeparator />
           <Link href="/login" onClick={handleLogout}>
             <DropdownMenuItem
