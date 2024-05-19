@@ -197,8 +197,9 @@ export default function Lounge({
       if (res.ok) {
         toast({
           title: "Success!",
-          description: "Lounge created.",
+          description: "Lounge joined.",
         });
+        fetchUserId();
       } else {
         toast({
           title: "Uh oh! Something went wrong.",

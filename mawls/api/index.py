@@ -390,6 +390,23 @@ def rename_lounge(lounge_name, lounge_id):
         print('Error:', e)
         return jsonify({'message': 'Server error occurred during channel renaming'}), 500
 
+# Leaves a lounge. 
+@app.route("/api/leave_lounge/<user_id>/<lounge_id>", methods=['PUT'])
+def leave_lounge(user_id, lounge_id):
+    try:
+        # Convert the string IDs to UUIDs
+        user_uuid = uuid.UUID(user_id)
+        lounge_uuid = uuid.UUID(lounge_id)
+
+        # Update the user record to remove the lounge ID from the lounges list
+        query = "UPDATE user SET lounges = lounges - [%s] WHERE user_id = %s"
+        dbSession.execute(query, (lounge_uuid, user_uuid))
+        
+        return jsonify({'message': 'You have left the lounge successfully'}), 200
+    except Exception as e:
+        print('Error:', e)
+        return jsonify({'message': 'Server error occurred during leaving the lounge'}), 500
+
 #------------------------CHANNELS--------------------------------  
 
 #Create 4 Default channels

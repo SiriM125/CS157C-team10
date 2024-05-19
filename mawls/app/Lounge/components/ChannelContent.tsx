@@ -361,7 +361,7 @@ export default function ChannelContent({ selectedLounge, selectedChannel }: Prop
     let intervalId: NodeJS.Timeout;
 
     const fetchMessages = async () => {
-      if (!selectedChannel || !selectedChannel.channel_id) return; // If they are undefined... do nothing.
+      if (!selectedChannel || !selectedLounge) return; // If they are undefined... do nothing.
   
       try {
         const response = await fetch(`/api/get_messages/${selectedChannel.channel_id}`);

@@ -104,6 +104,9 @@ export default function Channels({
   const [showLoungeRenameDialog, setShowLoungeRenameDialog] = useState(false);
   const [newLoungeName, setNewLoungeName] = useState("");
 
+  const [showExitConfirmation, setShowExitConfirmation] = useState(false);
+
+
   const [newChannelName, setNewChannelName] = useState("");
 
   const { toast } = useToast();
@@ -305,8 +308,7 @@ export default function Channels({
       // Implement delete logic here
       console.log('Delete lounge');
     } else if (action === 'leave') {
-      // Implement leave logic here
-      console.log('Leave lounge');
+      setShowExitConfirmation(true);
     }
   };  
 
@@ -352,6 +354,32 @@ export default function Channels({
       });
     }
   };
+
+  const handleExitLounge = async () => {
+    if (selectedLounge && userId) {
+      try {
+        const response = await fetch(`/api/leave_lounge/${userId}/${selectedLounge.lounge_id}`, {
+          method: 'PUT',
+        });
+
+        if (response.ok) {
+          const updatedLounges = lounges.filter(lounge => lounge.lounge_id !== selectedLounge.lounge_id);
+          setLounges(updatedLounges)
+          setSelectedLounge(null);
+          setShowExitConfirmation(false);
+          toast({ description: 'Exited lounge successfully.'});
+          
+        } else {
+          toast({ description: 'Failed to exit lounge: problem with backend'});
+        }
+
+      } catch (error) {
+        console.error('Error exiting lounge:', error);
+        toast({ description: 'Failed to exit lounge.', variant: 'destructive' });
+      }
+    }
+  };
+
 
   return (
     <div className="fixed w-60 h-screen left-0 m-0 ml-16 bg-zinc-200 overflow-hidden">
@@ -514,7 +542,8 @@ export default function Channels({
       </Dialog>
 
 
-      {/* Lounge Dialog */}
+      {/* Lounge Dialogs From Here*/}
+
       {/* Dialog for lounge actions */}
       <Dialog open={showLoungeDialog} onOpenChange={setShowLoungeDialog}>
         <DialogContent>
@@ -574,6 +603,25 @@ export default function Channels({
         </Dialog>
       )}
 
+      {/* Exit Lounge Confirmation Dialog */}
+      {showExitConfirmation && (
+        <Dialog open={showExitConfirmation} onOpenChange={setShowExitConfirmation}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Confirm Exit</DialogTitle>
+              <DialogDescription>
+                Are you sure you want to exit this lounge?
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter>
+              <Button onClick={handleExitLounge}>Yes</Button>
+              <DialogClose asChild>
+                <Button variant="secondary">No</Button>
+              </DialogClose>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
 
       <div className="fixed bottom-0 w-60 h-12 m-0 p-0 pt-1 px-1 bg-zinc-300 border-t border-zinc-400">
         <UserInfo user={username} />
