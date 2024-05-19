@@ -111,6 +111,13 @@ export default function Channels({
 
   const { toast } = useToast();
 
+  // Clear channels when selected lounge changes
+  useEffect(() => {
+    console.log("Selected lounge changed. Clearing channels.");
+    setChannels([]);
+    console.log(selectedLounge?.lounge_name)
+  }, [selectedLounge]);
+
   const openDialog = (channel: Channel) => {
     setSelectedChannelState(channel);
     setShowChoiceDialog(true);
@@ -177,6 +184,7 @@ export default function Channels({
     setCreateChannel(false);
     //setRenameChannel(false);
   };
+
 
   const submitCreate = async () => {
     try {

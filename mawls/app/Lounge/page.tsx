@@ -20,6 +20,7 @@ interface Channel {
 
 export default function Dashboard() {
   const [username, setUsername] = useState("");
+  const [userId, setUserId] = useState("");
   const [selectedLounge, setSelectedLounge] = useState<Lounge | null>(null);
   const [selectedChannel, setSelectedChannel] = useState<Channel | null>(null);
   const [lounges, setLounges] = useState<Lounge[]>([]); // State to hold lounges
@@ -48,6 +49,19 @@ export default function Dashboard() {
       .then(data => {
         setUsername(data.username);
       })
+
+    fetch('/api/get_user_id')
+      .then(response => {
+        if (response.ok) {
+          return response.json();
+        } else {
+          throw new Error('Failed to get username');
+        }
+      })
+      .then(data => {
+        setUserId(data.user_id);
+      })
+
       .catch(error => {
         console.error('Error fetching username:', error);
         window.location.href = '/login' //Send them back to login page if the username cannot be obtained.
@@ -67,11 +81,29 @@ export default function Dashboard() {
       .then((data) => {
         setLounges(data.lounges);
         console.log(data.lounges);
+
+        // Check if the selected lounge is in the fetched lounges
+        if (selectedLounge && !data.lounges.some((lounge:Lounge) => lounge.lounge_id === selectedLounge.lounge_id)) {
+          setSelectedLounge(null); // Set selected lounge to null if it's not in the fetched lounges
+          setSelectedChannel(null); // Also clear selected channel
+        } else if (selectedLounge && data.lounges.some((lounge:Lounge) => lounge.lounge_id === selectedLounge.lounge_id && lounge.lounge_name != selectedLounge.lounge_name)) {
+          const updatedLounge = data.lounges.find((lounge:Lounge) => lounge.lounge_id === selectedLounge.lounge_id);
+          setSelectedLounge(updatedLounge); // Set selected lounge to be the lounge with the same id
+        }
+
       })
       .catch((error) => {
         console.error("Error fetching lounges:", error);
       });
   };
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      fetchLounges(userId); // Assuming username is the user ID
+    }, 10000); // Fetch lounges every 10 seconds
+  
+    return () => clearInterval(interval); // Cleanup function
+  }, [userId]); // Run effect when username changes
 
   useEffect(() => {
     fetchLounges
