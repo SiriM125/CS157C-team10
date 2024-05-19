@@ -69,7 +69,7 @@ export default function Dashboard() {
   }, []);
 
   const fetchLounges = (user: string) => {
-    console.log("fetch: " + user)
+    //console.log("fetch: " + user)
     fetch(`/api/user_lounges/${user}`)
       .then((response) => {
         if (response.ok) {
@@ -84,12 +84,23 @@ export default function Dashboard() {
 
         // Check if the selected lounge is in the fetched lounges
         if (selectedLounge && !data.lounges.some((lounge:Lounge) => lounge.lounge_id === selectedLounge.lounge_id)) {
+          console.log("Selected lounge not found in fetched lounges");
           setSelectedLounge(null); // Set selected lounge to null if it's not in the fetched lounges
           setSelectedChannel(null); // Also clear selected channel
-        } else if (selectedLounge && data.lounges.some((lounge:Lounge) => lounge.lounge_id === selectedLounge.lounge_id && lounge.lounge_name != selectedLounge.lounge_name)) {
+        } else if (selectedLounge) {
+          console.log("Selected lounge found in fetched lounges");
           const updatedLounge = data.lounges.find((lounge:Lounge) => lounge.lounge_id === selectedLounge.lounge_id);
-          setSelectedLounge(updatedLounge); // Set selected lounge to be the lounge with the same id
+          console.log("Updated lounge found:", updatedLounge);
+          if (updatedLounge && updatedLounge.lounge_name !== selectedLounge.lounge_name) {
+            console.log("Lounge name has changed");
+            setSelectedLounge(updatedLounge); // Set selected lounge to be the lounge with the same id
+            console.log(selectedLounge.lounge_name)
+            console.log(updatedLounge.lounge_name);
+          } else { 
+            console.log("Lounge name has not changed");
+          }
         }
+
 
       })
       .catch((error) => {
@@ -104,10 +115,6 @@ export default function Dashboard() {
   
     return () => clearInterval(interval); // Cleanup function
   }, [userId]); // Run effect when username changes
-
-  useEffect(() => {
-    fetchLounges
-  });
   
   return (
     <main className="overscroll" style={{ overflow: 'hidden' }}>

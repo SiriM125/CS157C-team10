@@ -51,7 +51,7 @@ interface Lounge {
 
 interface Props {
   selectedLounge: Lounge | null;
-  setSelectedLounge: (lounge: Lounge | null) => void;
+  setSelectedLounge: React.Dispatch<React.SetStateAction<Lounge | null>>;
   selectChannel: (channel: Channel | null) => Promise<void> | void;
   selectedChannel: Channel | null;
   lounges: Lounge[];
