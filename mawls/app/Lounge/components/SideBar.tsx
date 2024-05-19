@@ -27,10 +27,15 @@ import React, { useState, useEffect, ChangeEvent } from "react";
 interface Lounge {
   lounge_name: string;
   lounge_id: string;
+  creator_id: string;
 }
 
 interface Props {
-  selectLounge: (lounge: Lounge | null) => Promise<void> | void;
+  selectLounge: (lounge: Lounge | null) => void;
+  selectedLounge: Lounge | null;
+  setSelectedLounge: React.Dispatch<React.SetStateAction<Lounge | null>>;
+  lounges: Lounge[];
+  setLounges: React.Dispatch<React.SetStateAction<Lounge[]>>;
 }
 
 const DMIcon = () => {
@@ -123,15 +128,20 @@ function LoungeIcon({
 
 const Divider = () => <hr className="lounge-hr" />;
 
-export default function Lounge({ selectLounge }: Props) {
+export default function Lounge({ 
+  selectLounge, 
+  selectedLounge, 
+  setSelectedLounge,
+  lounges,
+  setLounges
+}: Props) {
   const [createLounge, setCreateLounge] = useState(false);
   const [joinLounge, setJoinLounge] = useState(false);
 
   const [loungeId, setLoungeId] = useState("");
   const [loungeName, setLoungeName] = useState("");
   const [userid, setUserid] = useState("");
-  const [lounges, setLounges] = useState<Lounge[]>([]);
-  const [selectedLounge, setSelectedLounge] = useState<Lounge | null>(null);
+  // const [selectedLounge, setSelectedLounge] = useState<Lounge | null>(null);
   const [currentLounge, setCurrentLounge] = useState<Lounge | null>(null);
   const { toast } = useToast();
 

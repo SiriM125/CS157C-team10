@@ -9,6 +9,7 @@ import { useState, useEffect } from 'react';
 interface Lounge {
   lounge_name: string;
   lounge_id: string;
+  creator_id: string;
 }
 
 interface Channel {
@@ -21,15 +22,11 @@ export default function Dashboard() {
   const [username, setUsername] = useState("");
   const [selectedLounge, setSelectedLounge] = useState<Lounge | null>(null);
   const [selectedChannel, setSelectedChannel] = useState<Channel | null>(null);
+  const [lounges, setLounges] = useState<Lounge[]>([]); // State to hold lounges
 
   const selectLounge = (lounge : Lounge | null) => {
     setSelectedLounge(lounge)
-    // if (!lounge || lounge === null){
-      setSelectedChannel(null);
-    // } 
-    // else {
-    //   setSelectedChannel("main")
-    // }
+    setSelectedChannel(null);
     console.log(lounge)
   }
 
@@ -57,31 +54,39 @@ export default function Dashboard() {
       });
   }, []);
 
-  // useEffect(() => {
-  //   // Fetch the username from the backend
-  //   fetch('/api/get_username')
-  //     .then(response => response.json())
-  //     .then(data => {
-  //       setUsername(data.username);
-  //     })
-  //     .catch(error => {
-  //       console.error('Error fetching username:', error);
-  //       window.location.href = '/login' //Send them back to login page if the username cannot be obtained. 
-  //     });
-  // }, []);
+  const fetchLounges = (user: string) => {
+    console.log("fetch: " + user)
+    fetch(`/api/user_lounges/${user}`)
+      .then((response) => {
+        if (response.ok) {
+          return response.json();
+        } else {
+          throw new Error("Failed to get lounges");
+        }
+      })
+      .then((data) => {
+        setLounges(data.lounges);
+        console.log(data.lounges);
+      })
+      .catch((error) => {
+        console.error("Error fetching lounges:", error);
+      });
+  };
 
-
+  useEffect(() => {
+    fetchLounges
+  });
+  
   return (
     <main className="overscroll" style={{ overflow: 'hidden' }}>
       <div className="flex">
         <ChannelContent selectedLounge={selectedLounge} selectedChannel={selectedChannel}/>
-        <Channels selectedLounge={selectedLounge} selectChannel={selectChannel} selectedChannel={selectedChannel}/>
-        <SideBar selectLounge={selectLounge}/>
+        <Channels selectedLounge={selectedLounge} setSelectedLounge={setSelectedLounge} selectChannel={selectChannel} selectedChannel={selectedChannel} lounges={lounges} setLounges={setLounges}/>
+        <SideBar selectLounge={selectLounge} selectedLounge={selectedLounge} setSelectedLounge={setSelectedLounge} lounges={lounges} setLounges={setLounges}/>
       </div>
     </main>
   );
 }
-
 
 
 // "use client";

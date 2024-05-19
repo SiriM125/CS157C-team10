@@ -187,6 +187,14 @@ def user_id():
         print('Error:', e)
         return jsonify({'message': 'Server error occurred while retrieving user ID'}), 500
 
+# Retrieve current user ID using session
+@app.route("/api/get_user_id")
+def get_user_id():
+    if 'user_id' in session: 
+        return jsonify({'user_id': session['user_id']})
+    else:
+        return jsonify({'message': 'User id not found'}), 404
+
 # Retrieve a username based on user_id (for messages)
 @app.route("/api/get_msg_username/<user_id>")
 def get_msg_username(user_id):
@@ -354,10 +362,14 @@ def user_lounges(user_id):
         if lounges:
             lounge_details = []
             for lounge_id in lounges:
-                query = "SELECT lounge_id, lounge_name FROM lounge WHERE lounge_id = %s ALLOW FILTERING"
+                query = "SELECT lounge_id, lounge_name, creator_id FROM lounge WHERE lounge_id = %s ALLOW FILTERING"
                 result = dbSession.execute(query, (lounge_id,))
                 for row in result:
-                    lounge_details.append({'lounge_id': str(row.lounge_id), 'lounge_name': row.lounge_name})
+                    lounge_details.append({
+                        'lounge_id': str(row.lounge_id), 
+                        'lounge_name': row.lounge_name,
+                        'creator_id': str(row.creator_id)
+                    })
             
             return jsonify({'lounges': lounge_details}), 200
         else:
@@ -367,6 +379,16 @@ def user_lounges(user_id):
         return jsonify({'message': 'Server error occurred while retrieving user lounges'}), 500
 
  
+# Rename a lounge. 
+@app.route("/api/rename_lounge/<lounge_name>/<lounge_id>", methods=['PUT'])
+def rename_lounge(lounge_name, lounge_id):
+    try:
+        query = "UPDATE lounge SET lounge_name = %s WHERE lounge_id=%s"
+        dbSession.execute(query, (lounge_name, uuid.UUID(lounge_id)))
+        return jsonify({'message': 'Channel was renamed successfully', 'lounge_id': str(lounge_id)}), 201
+    except Exception as e:
+        print('Error:', e)
+        return jsonify({'message': 'Server error occurred during channel renaming'}), 500
 
 #------------------------CHANNELS--------------------------------  
 

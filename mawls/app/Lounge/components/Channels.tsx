@@ -46,12 +46,16 @@ interface UserProps {
 interface Lounge {
   lounge_name: string;
   lounge_id: string;
+  creator_id: string;
 }
 
 interface Props {
   selectedLounge: Lounge | null;
+  setSelectedLounge: (lounge: Lounge | null) => void;
   selectChannel: (channel: Channel | null) => Promise<void> | void;
   selectedChannel: Channel | null;
+  lounges: Lounge[];
+  setLounges: React.Dispatch<React.SetStateAction<Lounge[]>>;
 }
 
 function UserInfo({ user }: UserProps) {
@@ -74,9 +78,17 @@ function UserInfo({ user }: UserProps) {
   );
 }
 
-export default function Channels({selectedLounge, selectChannel, selectedChannel,}: Props) {
+export default function Channels({
+  selectedLounge, 
+  setSelectedLounge, 
+  selectChannel, 
+  selectedChannel, 
+  lounges,
+  setLounges
+}: Props) {
   
   const [username, setUsername] = useState("");
+  const [userId, setUserId] = useState("");
   const [channels, setChannels] = useState<Channel[]>([]);
 
   const [channelName, setChannelName] = useState("");
@@ -86,9 +98,11 @@ export default function Channels({selectedLounge, selectChannel, selectedChannel
   const [selectedChannelState, setSelectedChannelState] = useState<Channel | null>(null);
 
   const [showRenameDialog, setShowRenameDialog] = useState(false);
-  const [renameChannel, setRenameChannel] = useState(false);
-
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
+
+  const [showLoungeDialog, setShowLoungeDialog] = useState(false);
+  const [showLoungeRenameDialog, setShowLoungeRenameDialog] = useState(false);
+  const [newLoungeName, setNewLoungeName] = useState("");
 
   const [newChannelName, setNewChannelName] = useState("");
 
@@ -123,50 +137,17 @@ export default function Channels({selectedLounge, selectChannel, selectedChannel
     }
   };
 
-  const handleSubmit = async () => {
-    if (!selectedChannelState || !newChannelName.trim()) return;
-
-    try {
-      const res = await fetch(
-        `/api/rename_channel/${selectedChannelState.channel_id}`,
-        {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ newChannelName }),
-        }
-      );
-
-      if (res.ok) {
-        // Update channel name locally
-        const updatedChannel = { ...selectedChannelState, channel_name: newChannelName };
-        setChannels(channels.map((channel) => (channel.channel_id === updatedChannel.channel_id ? updatedChannel : channel)));
-        toast({
-          title: "Success!",
-          description: "Channel renamed successfully.",
-        });
-        setShowChoiceDialog(false);
-        setNewChannelName("");
-      } else {
-        throw new Error("Failed to rename channel");
-      }
-    } catch (error) {
-      console.error("Error renaming channel:", error);
-      toast({
-        title: "Error!",
-        description: "Failed to rename channel.",
-      });
-    }
-  };
-  
-
   useEffect(() => {
     //Fetch username
     fetch("/api/get_username")
       .then((response) => response.json())
       .then((data) => setUsername(data.username))
       .catch((error) => console.error("Error fetching username:", error));
+
+    fetch("/api/get_user_id")
+    .then((response) => response.json())
+      .then((data) => setUserId(data.user_id))
+      .catch((error) => console.error("Error fetching user id:", error));
 
     if (selectedLounge) {
       //Fetch channels for the selected lounge
@@ -188,17 +169,6 @@ export default function Channels({selectedLounge, selectChannel, selectedChannel
       setChannels([]);
     }
   }, [selectedLounge]);
-
-
-  const handleAddChannel = () => {
-    // Implement your logic to add a new channel here
-    console.log("Add channel functionality to be implemented.");
-  };
-
-
-  const onChangeChannelName = (e: ChangeEvent<HTMLInputElement>) => {
-    setChannelName(e.target.value);
-  };
 
   const back = () => {
     setCreateChannel(false);
@@ -321,12 +291,80 @@ export default function Channels({selectedLounge, selectChannel, selectedChannel
   };
 
 
+  // Lounge gear icon stuff
+
+  const handleGearIconClick = () => {
+    setShowLoungeDialog(true);
+  };
+
+  const handleLoungeAction = (action: 'rename' | 'delete' | 'leave') => {
+    setShowLoungeDialog(false);
+    if (action === 'rename') {
+      setShowLoungeRenameDialog(true);
+    } else if (action === 'delete') {
+      // Implement delete logic here
+      console.log('Delete lounge');
+    } else if (action === 'leave') {
+      // Implement leave logic here
+      console.log('Leave lounge');
+    }
+  };  
+
+  const handleLoungeRename = async () => {
+    try {
+      if (!selectedLounge || !newLoungeName.trim()) {
+        throw new Error("Invalid input.");
+      }
+
+      const res = await fetch(`/api/rename_lounge/${newLoungeName}/${selectedLounge.lounge_id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+      
+      if (res.ok) {
+        const updatedLounge = { ...selectedLounge, lounge_name: newLoungeName };
+        setSelectedLounge(updatedLounge);
+
+        // Update lounges in Sidebar
+        const updatedLounges = lounges.map((lounge) =>
+          lounge.lounge_id === updatedLounge.lounge_id ? updatedLounge : lounge
+        );
+        setLounges(updatedLounges);
+
+
+
+        toast({
+          title: "Success!",
+          description: "Lounge renamed successfully.",
+        });
+        setShowLoungeRenameDialog(false);
+        
+      } else {
+        throw new Error("Failed to rename lounge");
+      }
+    } catch (err) {
+      console.error("Error renaming lounge:", err);
+      toast({
+        title: "Uh oh! Something went wrong.",
+        description: "Error occurred renaming lounge.",
+      });
+    }
+  };
+
   return (
     <div className="fixed w-60 h-screen left-0 m-0 ml-16 bg-zinc-200 overflow-hidden">
-      <div className="flex items-center justify-center h-14 m-0 p-0 bg-zinc-200 border-b border-zinc-300">
+      <div className="flex items-center justify-center mr-2 h-14 m-0 p-0 bg-zinc-200 border-b border-zinc-300">
         <div className="text-lg tracking-wider font-bold text-blue-500 mr-auto ml-4 my-auto align-middle unselectable">
           {selectedLounge ? selectedLounge.lounge_name : "Select Lounge"}
         </div>
+          {selectedLounge && (
+            <GearIcon
+              className="w-6 h-6 text-gray-400 cursor-pointer"
+              onClick={handleGearIconClick}
+            />
+          )}
       </div>
       <div className="flex flex-col items-center justify-start p-1 m-0">
         {channels.map((channel) => (
@@ -474,6 +512,68 @@ export default function Channels({selectedLounge, selectChannel, selectedChannel
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+
+      {/* Lounge Dialog */}
+      {/* Dialog for lounge actions */}
+      <Dialog open={showLoungeDialog} onOpenChange={setShowLoungeDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Manage Lounge</DialogTitle>
+            <DialogDescription>
+              What would you like to do with this lounge?
+            </DialogDescription>
+          </DialogHeader>
+          {selectedLounge?.creator_id === userId ? (
+            <div className="flex justify-center gap-4">
+              <Button onClick={() => handleLoungeAction('rename')} className="mb-2">
+                Rename Lounge
+              </Button>
+              <Button onClick={() => handleLoungeAction('delete')} variant="destructive">
+                Delete Lounge
+              </Button>
+            </div>
+          ) : (
+            <Button onClick={() => handleLoungeAction('leave')} variant="destructive">
+              Leave Lounge
+            </Button>
+          )}
+          <DialogClose asChild>
+            <Button variant="ghost">Cancel</Button>
+          </DialogClose>
+        </DialogContent>
+      </Dialog>
+
+      
+      {/* Rename Lounge Dialog */}
+      {showLoungeRenameDialog && (
+        <Dialog open={showLoungeRenameDialog} onOpenChange={() => setShowLoungeRenameDialog(false)}>
+          <DialogContent>
+          <DialogHeader className="text-zinc-800 items-center justify-center">
+            <DialogTitle>Rename Lounge</DialogTitle>
+          </DialogHeader>
+          <DialogDescription className="text-center">
+              Give your channel a new name.
+          </DialogDescription>
+            <Input
+              id="newLoungeName"
+              type="text"
+              value={newLoungeName}
+              placeholder="New Lounge Name"
+              onChange={(e) => setNewLoungeName(e.target.value)}
+            />
+          <DialogFooter>
+            <Button onClick={handleLoungeRename}>
+              Rename
+            </Button>
+            <Button onClick={() => setShowLoungeRenameDialog(false)} variant="secondary">
+              Cancel
+            </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
+
 
       <div className="fixed bottom-0 w-60 h-12 m-0 p-0 pt-1 px-1 bg-zinc-300 border-t border-zinc-400">
         <UserInfo user={username} />
