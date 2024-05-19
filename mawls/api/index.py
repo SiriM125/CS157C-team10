@@ -305,25 +305,68 @@ def create_lounge(lounge_name, user_id):
         return jsonify({'message': 'Server error occurred during lounge creation'}), 500
     
 # Delete an existing lounge (only creator can delete)
-@app.route("/api/delete_lounge/<lounge_id>/<user_id>")
+@app.route("/api/delete_lounge/<lounge_id>/<user_id>", methods=['DELETE'])
 def delete_lounge(lounge_id, user_id):
     try:
-        query = "SELECT * FROM lounge WHERE lounge_id = %s AND creator_id = %s ALLOW FILTERING"
-        result = dbSession.execute(query, (uuid.UUID(lounge_id), uuid.UUID(user_id))).one()
-        if not result:
-            return jsonify({'message': 'You do not have permission to delete this lounge'}), 401
-        
-        query = "DELETE FROM lounge WHERE lounge_id = %s"
-        dbSession.execute(query, (uuid.UUID(lounge_id),))
+        lounge_id_uuid = uuid.UUID(lounge_id)
+        user_id_uuid = uuid.UUID(user_id)
 
-        query = "UPDATE user SET lounges = lounges - {%s} WHERE user_id = %s"
-        dbSession.execute(query, (uuid.UUID(lounge_id), uuid.UUID(user_id)))
+        # First, retrieve all channels with the given lounge_id
+        query = "SELECT channel_id FROM channel WHERE lounge_id = %s ALLOW FILTERING"
+        result = dbSession.execute(query, (lounge_id_uuid,))
+
+        # Delete all messages for each channel
+        for row in result:
+            channel_id = row.channel_id
+
+            # Retrieve message_ids for the channel
+            message_query = "SELECT message_id FROM message WHERE channel_id = %s ALLOW FILTERING"
+            messages_result = dbSession.execute(message_query, (channel_id,))
+            message_ids = [row.message_id for row in messages_result]
+
+            # Delete all messages
+            for message_id in message_ids:
+                delete_message_query = "DELETE FROM message WHERE message_id = %s"
+                dbSession.execute(delete_message_query, (message_id,))
+
+            # Then delete the channel itself
+            delete_channel_query = "DELETE FROM channel WHERE channel_id = %s"
+            dbSession.execute(delete_channel_query, (channel_id,))
+
+        # Finally, delete the lounge itself
+        delete_lounge_query = "DELETE FROM lounge WHERE lounge_id = %s"
+        dbSession.execute(delete_lounge_query, (lounge_id_uuid,))
+
+        # Update user's lounges list to remove the lounge_id
+        update_user_query = "UPDATE user SET lounges = lounges - [%s] WHERE user_id = %s"
+        dbSession.execute(update_user_query, (lounge_id_uuid, user_id_uuid))
+
         return jsonify({'message': 'Lounge deleted successfully'}), 200
+    
     except Exception as e:
         print('Error:', e)
         return jsonify({'message': 'Server error occurred during lounge deletion'}), 500
 
-#For user to enter an existing lounge given lounge ID    
+
+# @app.route("/api/delete_lounge/<lounge_id>/<user_id>")
+# def delete_lounge(lounge_id, user_id):
+#     try:
+#         query = "SELECT * FROM lounge WHERE lounge_id = %s AND creator_id = %s ALLOW FILTERING"
+#         result = dbSession.execute(query, (uuid.UUID(lounge_id), uuid.UUID(user_id))).one()
+#         if not result:
+#             return jsonify({'message': 'You do not have permission to delete this lounge'}), 401
+        
+#         query = "DELETE FROM lounge WHERE lounge_id = %s"
+#         dbSession.execute(query, (uuid.UUID(lounge_id),))
+
+#         query = "UPDATE user SET lounges = lounges - {%s} WHERE user_id = %s"
+#         dbSession.execute(query, (uuid.UUID(lounge_id), uuid.UUID(user_id)))
+#         return jsonify({'message': 'Lounge deleted successfully'}), 200
+#     except Exception as e:
+#         print('Error:', e)
+#         return jsonify({'message': 'Server error occurred during lounge deletion'}), 500
+
+# For user to enter an existing lounge given lounge ID    
 @app.route("/api/enter_lounge/<user_id>/<lounge_id>")
 def enter_lounge(user_id, lounge_id):
     try:
@@ -406,6 +449,7 @@ def leave_lounge(user_id, lounge_id):
     except Exception as e:
         print('Error:', e)
         return jsonify({'message': 'Server error occurred during leaving the lounge'}), 500
+
 
 #------------------------CHANNELS--------------------------------  
 

@@ -304,9 +304,10 @@ export default function Channels({
     setShowLoungeDialog(false);
     if (action === 'rename') {
       setShowLoungeRenameDialog(true);
+
     } else if (action === 'delete') {
-      // Implement delete logic here
-      console.log('Delete lounge');
+      setShowDeleteConfirmation(true);
+
     } else if (action === 'leave') {
       setShowExitConfirmation(true);
     }
@@ -355,6 +356,42 @@ export default function Channels({
     }
   };
 
+
+  const confirmDeleteLounge = async () => {
+    try {
+      if (!selectedLounge) return;
+  
+      const res = await fetch(`/api/delete_lounge/${selectedLounge.lounge_id}/${userId}`, {
+        method: "DELETE",
+      });
+  
+      if (res.ok) {
+        const updatedLounges = lounges.filter(
+          (lounge) => lounge.lounge_id !== selectedLounge.lounge_id
+        );
+        setLounges(updatedLounges);
+        setSelectedLounge(null);
+  
+        toast({
+          title: "Success!",
+          description: "Lounge deleted successfully.",
+        });
+  
+        setShowDeleteConfirmation(false);
+      } else {
+        throw new Error("Failed to delete lounge");
+      }
+    } catch (error) {
+      console.error("Error deleting lounge:", error);
+      toast({
+        title: "Error!",
+        description: "Failed to delete lounge.",
+        variant: "destructive",
+      });
+    }
+  };
+  
+
   const handleExitLounge = async () => {
     if (selectedLounge && userId) {
       try {
@@ -368,7 +405,7 @@ export default function Channels({
           setSelectedLounge(null);
           setShowExitConfirmation(false);
           toast({ description: 'Exited lounge successfully.'});
-          
+
         } else {
           toast({ description: 'Failed to exit lounge: problem with backend'});
         }
@@ -602,6 +639,38 @@ export default function Channels({
           </DialogContent>
         </Dialog>
       )}
+
+      {/* Delete confirmation dialog for lounge */}
+      <Dialog
+        open={showDeleteConfirmation}
+        onOpenChange={setShowDeleteConfirmation}
+      >
+        <DialogContent>
+          <DialogHeader className="text-zinc-800 items-center justify-center">
+            <DialogTitle className="text-2xl">
+              Are you sure you want to delete this lounge?
+            </DialogTitle>
+          </DialogHeader>
+          <DialogFooter className="sm:justify-between">
+            <Button
+              onClick={() => setShowDeleteConfirmation(false)}
+              className="bg-zinc-100 text-zinc-600 hover:bg-slate-200"
+            >
+              Cancel
+            </Button>
+            <DialogClose asChild>
+              <Button
+                onClick={confirmDeleteLounge}
+                type="button"
+                className="bg-red-500 text-zinc-100 hover:bg-red-700 px-9"
+              >
+                Delete
+              </Button>
+            </DialogClose>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
 
       {/* Exit Lounge Confirmation Dialog */}
       {showExitConfirmation && (
