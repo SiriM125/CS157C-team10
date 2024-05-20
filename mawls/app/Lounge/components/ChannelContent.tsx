@@ -6,6 +6,7 @@ import io from 'socket.io-client';
 import { Socket } from 'socket.io-client';
 import { Toaster } from "@/components/ui/toaster";
 import { useToast } from "@/components/ui/use-toast";
+import FileManager from "./FileManager";
 
 
 interface Message {
@@ -22,7 +23,7 @@ interface Lounge {
 }
 
 interface Channel {
-  channel_id: string;
+  channel_id: string | null;
   channel_name: string;
 }
 
@@ -440,7 +441,13 @@ export default function ChannelContent({ selectedLounge, selectedChannel }: Prop
     <div className="fixed pl-[304px] m-0 h-screen w-full overflow-hidden">
       <div className="flex-grow items-center h-full w-full mt-0 ml-0 mx-auto px-0 pb-[130px] bg-zinc-100">
       <NavbarContent selectedLounge={selectedLounge} selectedChannel={selectedChannel}/>
+      {selectedChannel?.channel_name == "File Manager" && selectedChannel.channel_id == null && (
+        <div className='flex-grow h-full w-full p-4'>
+          <FileManager />
+        </div>
+      )}
       
+      {selectedChannel?.channel_name !== "File Manager" &&(
         <div className="flex flex-row h-full px-3">
 
           {/* Message display area here! */}
@@ -460,10 +467,12 @@ export default function ChannelContent({ selectedLounge, selectedChannel }: Prop
             </ScrollArea>
           )}
         </div>
+      )}
       </div>
 
 
     <div className="px-3 fixed bottom-4 left-[304px] w-[calc(100%-304px)]">
+      
       <div className="flex flex-row items-center justify-between w-full rounded-lg shadow-lg bg-zinc-300 px-4 h-12">
           <PlusIcon scale={18} className="bg-zinc-500 text-zinc-300 rounded-3xl cursor-pointer" onClick={sendMessage} />
           <input
@@ -472,7 +481,7 @@ export default function ChannelContent({ selectedLounge, selectedChannel }: Prop
             placeholder="Message"
             autoComplete="off"
             className="w-full bg-transparent outline-none ml-0 mr-auto px-2 text-zinc-700 cursor-text"
-            disabled={!selectedLounge || !selectedChannel}
+            disabled={!selectedLounge || !selectedChannel || selectedChannel.channel_id == null}
             onChange={onChangeMessage}
             value={message}
             onKeyDown={sendMessage}
