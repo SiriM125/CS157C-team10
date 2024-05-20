@@ -23,7 +23,7 @@ interface Lounge {
 }
 
 interface Channel {
-  channel_id: string;
+  channel_id: string | null;
   channel_name: string;
 }
 
