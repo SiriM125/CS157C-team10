@@ -1,9 +1,11 @@
+
 from datetime import datetime
+import shutil
 from socket import create_server
-from flask import Flask, jsonify, session
+from flask import Flask, jsonify, request, session
 from flask_cqlalchemy import CQLAlchemy
 from flask_session import Session
-
+from werkzeug.utils import secure_filename
 import uuid
 import os
 
@@ -148,6 +150,9 @@ def register(username, email, password):
         if not result.one():
             create_lounge_query = "INSERT INTO lounge (lounge_id, lounge_name, creator_id) VALUES (%s, %s, %s)"
             dbSession.execute(create_lounge_query, (lounge_id, "MAWLS Lounge", None))
+
+        #create default subfolder
+        create_subfolders(str(lounge_id))
 
         # Return success message
         return jsonify({'message': 'User registration successful'}), 201
@@ -299,6 +304,10 @@ def create_lounge(lounge_name, user_id):
         homework_channel_query = "INSERT INTO channel (channel_id, channel_name, lounge_id) VALUES (%s, %s, %s)"
         dbSession.execute(homework_channel_query, (homework_channel_id, "homework", lounge_id))
 
+        #File Manager subfolder
+        create_subfolders(lounge_id) 
+
+
         return jsonify({'message': 'Lounge was created successfully', 'lounge_id': lounge_id}), 201
     except Exception as e:
         print('Error:', e)
@@ -328,6 +337,11 @@ def delete_lounge(lounge_id, user_id):
             for message_id in message_ids:
                 delete_message_query = "DELETE FROM message WHERE message_id = %s"
                 dbSession.execute(delete_message_query, (message_id,))
+
+            #Delete all the files
+            channel_folder = os.path.join(UPLOAD_FOLDER, str(channel_id))
+            if os.path.exists(channel_folder):
+                shutil.rmtree(channel_folder)
 
             # Then delete the channel itself
             delete_channel_query = "DELETE FROM channel WHERE channel_id = %s"
@@ -508,6 +522,7 @@ def create_channel(channel_name, lounge_id):
         channel_id = uuid.uuid4()
         query = "INSERT INTO channel (channel_id, channel_name, lounge_id) VALUES (%s, %s, %s)"
         dbSession.execute(query, (channel_id, channel_name, uuid.UUID(lounge_id)))
+
         return jsonify({'message': 'Channel was created successfully', 'channel_id': str(channel_id)}), 201
     except Exception as e:
         print('Error:', e)
@@ -545,11 +560,14 @@ def delete_channel(channel_id):
         query_channel = "DELETE FROM channel WHERE channel_id = %s"
         dbSession.execute(query_channel, (channel_uuid,))
 
+        channel_folder = os.path.join(UPLOAD_FOLDER, channel_id)
+        if os.path.exists(channel_folder):
+            shutil.rmtree(channel_folder)
+
         return jsonify({'message': 'Channel was deleted successfully'}), 201
     except Exception as e:
         print('Error:', e)
         return jsonify({'message': 'Server error occurred during channel deletion'}), 500
-
 
 
 #------------------------MESSAGES--------------------------------  
@@ -709,6 +727,67 @@ def delete_message(message_id, user_id):
 #     except Exception as e:
 #         print('Error:', e)
 #         return jsonify({'message': 'Server error occurred during message editing'}), 500
+
+
+#------------------------- FILES ------------------------------
+
+#creates folder called mawl_files in CS157C-team10/
+script_dir = os.getcwd()
+UPLOAD_FOLDER = os.path.abspath(os.path.join(script_dir, '..', 'mawls_files'))
+
+if not os.path.exists(UPLOAD_FOLDER):
+    os.makedirs(UPLOAD_FOLDER)
+
+def create_subfolders(lounge_id):
+    lounge_folder = os.path.join(UPLOAD_FOLDER, lounge_id)
+    
+    os.makedirs(lounge_folder, exist_ok=True)
+
+
+@app.route("/api/upload_file/<lounge_id>", methods=['POST'])
+def upload_file(lounge_id):
+    try:
+        file = request.files.get('file') 
+        
+        if file:
+            create_subfolders(lounge_id) 
+
+            filename = secure_filename(file.filename)
+            file_path = os.path.join(UPLOAD_FOLDER, lounge_id, filename)
+            
+            print("Received file:", filename)  # Log the received filename
+            
+            file.save(file_path)
+            
+            print("File saved to:", file_path)  # Log the file path
+            
+            file_url = f"{request.url_root}{file_path}"
+
+            return jsonify({'message': 'File uploaded successfully', 'file_url': file_url}), 201
+        else:
+            return jsonify({'message': 'No file uploaded'}), 400
+    
+    except Exception as e:
+        print('Error:', e)
+        return jsonify({'message': 'Server error occurred during file upload'}), 500
+    
+
+@app.route("/api/list_files/<lounge_id>", methods=['GET'])
+def list_files(lounge_id):
+    try:
+        lounge_folder = os.path.join(UPLOAD_FOLDER, lounge_id)
+        files = []
+
+        for filename in os.listdir(lounge_folder):
+            file_url = f"{request.url_root}{lounge_id}/{filename}"
+            files.append({'file_url': file_url, 'filename': filename})
+
+        return jsonify(files), 200
+    except Exception as e:
+        print('Error:', e)
+        return jsonify({'message': 'Server error occurred during file listing'}), 500
+    
+
 # - - - Database creation/class stuff below - - -
 
 class User(db.Model):
@@ -731,6 +810,11 @@ class Message(db.Model):
     sender_id = db.columns.UUID(required=True)
     content = db.columns.Text(required=True)
     message_timestamp = db.columns.DateTime(required=True)
+
+# class File(db.Model):
+#     file_id = db.columns.UUID(primary_key=True)
+#     lounge_id = db.columns.UUID(required=True)
+#     file_url = db.columns.Text(required=True)
 
 class Channel(db.Model):
     channel_id = db.columns.UUID(primary_key=True)
@@ -802,4 +886,5 @@ if __name__ == '__main__':
     
 #     # Convert data to JSON and return
 #     return jsonify(data)
+
 
