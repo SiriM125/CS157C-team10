@@ -483,6 +483,45 @@ export default function Channels({
         )}
       </div>
 
+            {/* Popup for adding channels */}
+            {createChannel && (
+        <Dialog open={createChannel} onOpenChange={setCreateChannel}>
+          <DialogContent>
+            <DialogHeader className="text-zinc-800 items-center justify-center">
+              <DialogTitle className="text-2xl">Setup Your Channel</DialogTitle>
+              <DialogDescription className="text-center">
+                Give your new channel a name. You can always change it later.
+              </DialogDescription>
+            </DialogHeader>
+            <Label className="text-lg p-0">Channel Name</Label>
+            <Input
+              id="name"
+              type="text"
+              placeholder="Channel"
+              onChange={(e) => setChannelName(e.target.value)}
+              value={channelName}
+            />
+            <DialogFooter className="sm:justify-between">
+              <Button
+                onClick={back}
+                className="bg-zinc-100 text-zinc-600 hover:bg-slate-200"
+              >
+                Back
+              </Button>
+              <DialogClose asChild>
+                <Button
+                  onClick={submitCreate}
+                  type="submit"
+                  className="bg-blue-500 text-zinc-100 hover:bg-blue-700 px-9"
+                >
+                  Create
+                </Button>
+              </DialogClose>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
+
       {/* Popup dialog */}
       <Dialog open={showChoiceDialog} onOpenChange={setShowChoiceDialog}>
         <DialogContent>
