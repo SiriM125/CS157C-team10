@@ -17,7 +17,7 @@ Then to start running the application
 
     npm run dev
 
-Warning: If unable to run it as so, you may need to install pnpm. Use the following command in that case: 
+Warning: If unable to run it as so, you may need to install pnpm. Use the following command in that case (may need to use _sudo_ as well): 
 
     npm install -g pnpm
 
