@@ -35,10 +35,10 @@ export default function Home() {
         <div className = "right-half">
           <div>
               <Image
-                src="/loungesList.png"
+                src="/loungesSidebar.png"
                 alt="lounges"
-                width={200}
-                height={300}
+                width={75}
+                height={100}
               />
             </div>
         </div>
@@ -61,7 +61,7 @@ export default function Home() {
         <div className = "right-half">
           <div>
               <Image
-                src="/message.png"
+                src="/newChat.png"
                 alt="msg"
                 width={350}
                 height={350}
@@ -87,7 +87,7 @@ export default function Home() {
         <div className = "right-half">
           <div>
               <Image
-                src="/fileHierarchy.png"
+                src="/newFile.png"
                 alt="fileHierarchy"
                 width={350}
                 height={200}
@@ -100,14 +100,11 @@ export default function Home() {
         <div className = "left-half">
           <div style={{ display: 'flex', flexDirection: 'column' }}>
             <p className = "sm:text-4xl font-bol">
-              Manage Roles for Permissions
+              Invite People With Ease
             </p>
             <br/>
             <p className = "text-left">
-              Roles are the primarily means for managing permissions. 
-              When a user is assigned a role, they may be granted or restricted 
-              access from certain text channels or files. It also dictates the type 
-              of access that users has (like whether a user can upload or only download files).
+              Each Lounge is given a corresponding Id. It is displayed to be copied through a simple click, and can be shared with ease.
             </p>
           </div>
         </div>

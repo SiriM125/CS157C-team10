@@ -88,11 +88,11 @@ export default function Home() {
         <div className = "left-half">
           <div style={{ display: 'flex', flexDirection: 'column' }}>
             <p className = "sm:text-4xl font-bold">
-              Manage and assign member roles
+              Build your team
             </p>
             <br/>
             <p>
-              Control permissions for both files and text channels in one go.
+              It takes more than one person to truly build something beautiful.
             </p>
           </div>
         </div>
