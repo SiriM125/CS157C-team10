@@ -1,4 +1,14 @@
 
+
+MAWLS - CS157C Team 10 Final Project
+
+Created by Steven Pham, Brian Do, Siri Mudumbi
+
+
+MAWLS (Messaging App With Lounges and Storage)
+
+
+
 ## Installation
 
 Navigate to desired directory and run
@@ -17,7 +27,7 @@ Then to start running the application
 
     npm run dev
 
-Warning: If unable to run it as so, you may need to install pnpm. Use the following command in that case (may need to use _sudo_ as well): 
+Warning: If unable to run it as so, you may need to install pnpm. Use the following command in that case: 
 
     npm install -g pnpm
 
