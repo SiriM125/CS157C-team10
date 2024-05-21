@@ -100,6 +100,7 @@ export default function Channels({
 
   const [showRenameDialog, setShowRenameDialog] = useState(false);
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
+  const [showDeleteConfirmationChannel, setShowDeleteConfirmationChannel] = useState(false);
 
   const [showLoungeDialog, setShowLoungeDialog] = useState(false);
   const [showLoungeRenameDialog, setShowLoungeRenameDialog] = useState(false);
@@ -143,7 +144,7 @@ export default function Channels({
   const handleDelete = () => {
     if (selectedChannelState) {
       setShowChoiceDialog(false);
-      setShowDeleteConfirmation(true);
+      setShowDeleteConfirmationChannel(true);
     }
   };
 
@@ -590,8 +591,8 @@ export default function Channels({
 
       {/* Delete confirmation dialog */}
       <Dialog
-        open={showDeleteConfirmation}
-        onOpenChange={setShowDeleteConfirmation}
+        open={showDeleteConfirmationChannel}
+        onOpenChange={setShowDeleteConfirmationChannel}
       >
         <DialogContent>
           <DialogHeader className="text-zinc-800 items-center justify-center">
