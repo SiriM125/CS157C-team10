@@ -31,10 +31,13 @@ def index():
 app.config['CASSANDRA_HOSTS'] = ['127.0.0.1']
 app.config['CASSANDRA_KEYSPACE'] = 'mawls'
 
+db = CQLAlchemy(app)
+# Create mawls keyspace. Does not do anything if keyspace already exists.
+db.create_keyspace_simple(name = "mawls", replication_factor=1) 
+
 cluster = Cluster(['127.0.0.1'])
 dbSession = cluster.connect('mawls')
 
-db = CQLAlchemy(app)
 
 socketio = SocketIO(app)
 
@@ -232,6 +235,7 @@ def change_username(user_id, new_username):
 
         update_query = "UPDATE user SET username = %s WHERE user_id = %s"
         dbSession.execute(update_query, (new_username, uuid.UUID(user_id)))
+        session['username'] = new_username
 
         return jsonify({'message': 'Username changed successfully!'}), 200
     
@@ -820,9 +824,6 @@ class Channel(db.Model):
     channel_id = db.columns.UUID(primary_key=True)
     channel_name = db.columns.Text(required=True)
     lounge_id = db.columns.UUID(required=True)
-
-# Create mawls keyspace. Does not do anything if keyspace already exists.
-db.create_keyspace_simple(name = "mawls", replication_factor=1) 
 
 # Create tables
 db.sync_db()
