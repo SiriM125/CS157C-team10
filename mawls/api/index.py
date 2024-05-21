@@ -155,7 +155,7 @@ def register(username, email, password):
             dbSession.execute(create_lounge_query, (lounge_id, "MAWLS Lounge", None))
 
         #create default subfolder
-        create_subfolders(str(lounge_id))
+        create_subfolders(lounge_id)
 
         # Return success message
         return jsonify({'message': 'User registration successful'}), 201
@@ -743,7 +743,7 @@ if not os.path.exists(UPLOAD_FOLDER):
     os.makedirs(UPLOAD_FOLDER)
 
 def create_subfolders(lounge_id):
-    lounge_folder = os.path.join(UPLOAD_FOLDER, lounge_id)
+    lounge_folder = os.path.join(UPLOAD_FOLDER, str(lounge_id))
     
     os.makedirs(lounge_folder, exist_ok=True)
 
@@ -754,7 +754,7 @@ def upload_file(lounge_id):
         file = request.files.get('file') 
         
         if file:
-            create_subfolders(lounge_id) 
+            # create_subfolders(lounge_id) 
 
             filename = secure_filename(file.filename)
             file_path = os.path.join(UPLOAD_FOLDER, lounge_id, filename)
