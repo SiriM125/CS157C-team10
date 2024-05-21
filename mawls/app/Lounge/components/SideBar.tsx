@@ -40,6 +40,7 @@ interface Props {
 
 const DMIcon = () => {
   return (
+    <a href="/">
     <div className="lounge-icon group">
       <Image
         src="/mawls_transparent.png"
@@ -48,10 +49,8 @@ const DMIcon = () => {
         alt="DM"
         className="text-white"
       />
-      <span className="lounge-tooltip group-hover:scale-100 unselectable">
-        Direct Messages
-      </span>
     </div>
+    </a>
   );
 };
 
